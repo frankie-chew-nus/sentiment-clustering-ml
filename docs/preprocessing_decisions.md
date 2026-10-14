@@ -222,3 +222,15 @@ The temporary revised configuration (contractions ON, emoji describe, numbers ke
 
 These examples are manual functional checks, not evidence that P1 improves clustering. P0/P1 and optional preprocessing choices will be compared later under the experiment design.
 
+## Group 3 configuration refactor: protected lexical terms
+
+The project separates experimental choices from processing logic. Negation terms, sentiment/domain terms, intensifiers, and the combined stopword-protection set now live in config.py rather than being hard-coded inside lexical_normalization.py.
+
+The current categories are:
+- NEGATION_WORDS: terms such as no, not, never and common negative contractions.
+- SENTIMENT_PROTECTED_WORDS: airline-domain and sentiment-bearing terms such as delay, cancel, refund, terrible, good, worst, happy, angry, love and hate.
+- INTENSIFIER_WORDS: candidate modifiers such as very, really, so, too, extremely, absolutely and seriously.
+- STOPWORD_PROTECTED_WORDS: union of the above sets for stopword-removal experiments.
+
+These are configurable research choices, not claims that the lists are complete or optimal. They can be revised from label-free corpus analysis and manual review without changing the processing functions. The stopword function also accepts additional protected_words for experiment-specific overrides.
+

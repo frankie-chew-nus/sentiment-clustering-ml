@@ -230,3 +230,28 @@ def test_revised_p1_preserves_negative_rating():
 
 def test_strip_hashtag_symbols_standalone():
     assert strip_hashtag_symbols("#good #bad-service") == "good bad-service"
+
+def test_lexical_protection_lists_are_configured():
+    from config import (
+        NEGATION_WORDS,
+        SENTIMENT_PROTECTED_WORDS,
+        INTENSIFIER_WORDS,
+        STOPWORD_PROTECTED_WORDS,
+    )
+    assert "not" in NEGATION_WORDS
+    assert "terrible" in SENTIMENT_PROTECTED_WORDS
+    assert "very" in INTENSIFIER_WORDS
+    assert {"not", "terrible", "very"} <= STOPWORD_PROTECTED_WORDS
+
+
+def test_stopword_removal_preserves_configured_sentiment_modifiers():
+    result = remove_stopwords(
+        "this is not very good",
+        model="en_core_web_sm",
+        preserve_negation=True,
+    )
+    tokens = result.casefold().split()
+    assert "not" in tokens
+    assert "very" in tokens
+    assert "good" in tokens
+

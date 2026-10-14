@@ -29,6 +29,36 @@ AIRLINE_HASHTAG_SUFFIX_RULES = {
     "disappointed", "unacceptable", "poorservice", "badservice",
 }
 
+
+# Configurable lexical protection lists.
+# These are research choices rather than processing logic, so they live here.
+NEGATION_WORDS = frozenset({
+    "no", "not", "nor", "never", "none", "nobody", "nothing", "neither",
+    "nowhere", "cannot", "can't", "cant", "don't", "dont", "doesn't",
+    "doesnt", "didn't", "didnt", "isn't", "isnt", "aren't", "arent",
+    "wasn't", "wasnt", "weren't", "werent", "haven't", "havent",
+    "hasn't", "hasnt", "hadn't", "hadnt", "won't", "wont", "wouldn't",
+    "wouldnt", "shouldn't", "shouldnt", "couldn't", "couldnt",
+})
+
+SENTIMENT_PROTECTED_WORDS = frozenset({
+    "airline", "flight", "flights", "delayed", "delay", "cancelled", "canceled",
+    "cancel", "refund", "baggage", "luggage", "service", "terrible", "great",
+    "good", "bad", "worst", "best", "happy", "unhappy", "angry", "annoyed",
+    "disappointed", "awesome", "awful", "love", "hate",
+})
+
+# Candidate sentiment modifiers to protect if stopword removal is enabled.
+# This list is intentionally configurable and should be audited against raw text.
+INTENSIFIER_WORDS = frozenset({
+    "very", "really", "so", "too", "extremely", "absolutely", "totally",
+    "completely", "quite", "pretty", "highly", "incredibly", "seriously",
+})
+
+STOPWORD_PROTECTED_WORDS = (
+    NEGATION_WORDS | SENTIMENT_PROTECTED_WORDS | INTENSIFIER_WORDS
+)
+
 P0_CONFIG = {
     "remove_urls": True,
     "replace_airline_mentions": True,
