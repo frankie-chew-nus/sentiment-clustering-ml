@@ -5,18 +5,18 @@ Research decision:
   they appear as @mentions, #hashtags, or ordinary text.
 - Remove other @mentions.
 - Preserve non-airline hashtag content without the leading '#'.
+- For selected airline+sentiment hashtags, preserve the suffix:
+  #usairwaysfail -> "airline fail"; #unitedsucks -> "airline sucks".
 - Keep original raw tweets in a separate column; never overwrite source text.
 
-This reduces explicit airline identity in the vectorized text while preserving
-surrounding complaint/praise language. Ambiguous aliases (e.g. "American") need
-sample review to check for false replacements.
+The alias/suffix lists are curated and should be reviewed against real data.
 """
 from __future__ import annotations
 
 import re
 from typing import Collection, Mapping
 
-from config import AIRLINE_ALIASES, P0_CONFIG
+from config import AIRLINE_ALIASES, AIRLINE_HASHTAG_SUFFIX_RULES, P0_CONFIG
 
 _URL_RE = re.compile(r"(?i)\b(?:https?://|www\.)[^\s<>]+")
 _MENTION_RE = re.compile(r"(?<!\w)@([A-Za-z0-9_]+)")
@@ -27,7 +27,7 @@ _URL_TRAILING_PUNCTUATION = ".,!?;:)]}"
 
 
 def _compact(value: str) -> str:
-    """Canonical form for matching handles/hashtags with spaces or underscores."""
+    """Canonical form for comparing aliases, handles, and hashtags."""
     return re.sub(r"[\s_]+", "", value.lstrip("@#").strip()).casefold()
 
 
@@ -43,7 +43,6 @@ def _alias_pattern(aliases: Collection[str]) -> re.Pattern[str]:
         alternatives.append(re.escape(alias).replace(r"\ ", r"\s+"))
     if not alternatives:
         return re.compile(r"(?!x)x")
-    # Do not match inside handles/hashtags; those are handled by dedicated functions.
     return re.compile(
         r"(?<![\w@#])(?:" + "|".join(alternatives) + r")(?!\w)",
         re.IGNORECASE,
@@ -78,14 +77,35 @@ def remove_mentions(text: str) -> str:
 
 
 def replace_airline_hashtags(
-    text: str, aliases: Collection[str] = AIRLINE_ALIASES
+    text: str,
+    aliases: Collection[str] = AIRLINE_ALIASES,
+    suffix_rules: Collection[str] = AIRLINE_HASHTAG_SUFFIX_RULES,
 ) -> str:
-    """Replace recognized airline hashtags with 'airline'; keep other hashtag words."""
-    lookup = _normalized_aliases(aliases)
-    return _HASHTAG_RE.sub(
-        lambda match: "airline" if _compact(match.group(1)) in lookup else match.group(1),
-        text,
-    )
+    """Replace airline hashtags and selected airline-prefixed sentiment hashtags.
+
+    Exact airline hashtags become 'airline'. If an airline alias is a prefix of
+    a hashtag and the remainder is a configured suffix, preserve that suffix,
+    e.g. #usairwaysfail -> 'airline fail'. Other hashtags retain their words.
+    """
+    alias_set = _normalized_aliases(aliases)
+    suffix_set = {_compact(suffix) for suffix in suffix_rules}
+    ordered_aliases = sorted(alias_set, key=len, reverse=True)
+
+    def replacement(match: re.Match[str]) -> str:
+        token = match.group(1)
+        compact = _compact(token)
+        if compact in alias_set:
+            return "airline"
+
+        for alias in ordered_aliases:
+            if compact.startswith(alias) and len(compact) > len(alias):
+                suffix = compact[len(alias):]
+                if suffix in suffix_set:
+                    return f"airline {suffix}"
+
+        return token
+
+    return _HASHTAG_RE.sub(replacement, text)
 
 
 def replace_airline_names(
@@ -105,7 +125,6 @@ def normalize_whitespace(text: str) -> str:
     return _WHITESPACE_RE.sub(" ", text).strip()
 
 
-# Order matters: specialized airline-reference handling runs before generic cleanup.
 _STEPS = (
     ("remove_urls", remove_urls),
     ("replace_airline_mentions", replace_airline_mentions),
