@@ -205,11 +205,12 @@ def test_stopword_removal_requires_spacy_model():
         remove_stopwords("this is not good", model="model_that_does_not_exist", preserve_negation=True)
 
 
-def test_p2_is_conservative_by_default():
+def test_p2_final_lexical_defaults():
     assert P2_CONFIG["segmentation_mode"] == "none"
     assert P2_CONFIG["correct_spelling"] is False
-    assert P2_CONFIG["lemmatize"] is False
-    assert P2_CONFIG["remove_stopwords"] is False
+    assert P2_CONFIG["lemmatize"] is True
+    assert P2_CONFIG["remove_stopwords"] is True
+    assert P2_CONFIG["preserve_negation"] is True
 
 
 
@@ -277,4 +278,26 @@ def test_p0_does_not_segment_non_airline_hashtags():
 def test_p2_selective_segmentation_config():
     assert P2_CONFIG["segmentation_mode"] == "none"
     assert P2_CONFIG["hashtag_segmentation_mode"] == "wordninja"
+
+def test_p2_combines_lemmatization_stopwords_and_negation():
+    result = preprocess_text(
+        "I am not very disappointed with the delayed flights",
+        P2_CONFIG,
+    )
+    tokens = result.casefold().split()
+    assert "not" in tokens
+    assert "very" in tokens
+    assert "disappoint" in tokens
+    assert "delay" in tokens
+    assert "flight" in tokens
+    assert "am" not in tokens
+    assert "with" not in tokens
+
+
+def test_p2_keeps_intensifier_and_positive_sentiment():
+    result = preprocess_text("the service was really very good", P2_CONFIG)
+    tokens = result.casefold().split()
+    assert {"service", "really", "very", "good"} <= set(tokens)
+    assert "the" not in tokens
+    assert "was" not in tokens
 
