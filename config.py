@@ -42,9 +42,9 @@ P0_CONFIG = {
 P1_CONFIG = {
     **P0_CONFIG,
     "expand_contractions": True,
-    "convert_numbers": True,
+    "convert_numbers": False,
     "lowercase": True,
-    "punctuation_mode": "remove",
+    "punctuation_mode": "keep",
     "emoji_mode": "describe",
 }
 
