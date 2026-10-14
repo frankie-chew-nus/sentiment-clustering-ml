@@ -173,3 +173,52 @@ Group 1's tested behavior matches the team's current rules, including generic ai
 
 **Next step:** Proceed to Group 2 normalization while retaining raw tweet text separately. Keep this audit record as the rationale for the current Group 1 behavior.
 
+## Group 2 validation: revised P1 defaults
+
+Manual Colab validation was performed one operation at a time and then on the combined P1 pipeline.
+
+### Contractions
+
+The following examples expanded as intended and preserved explicit negation: can't -> can not, won't -> will not, don't -> do not, isn't -> is not, haven't -> have not. Informal no-apostrophe forms cant and dont were also expanded in the tested examples.
+
+### Emoji handling
+
+Describe, keep, and remove modes were checked. Describe mode preserved semantic text such as:
+- angry emoji -> "enraged face"
+- smiling emoji -> "smiling face with smiling eyes"
+- red heart -> "red heart"
+- crying emoji -> "loudly crying face"
+- thumbs-up emoji -> "thumbs up"
+
+P1 keeps describe mode as the default.
+
+### Lowercasing
+
+Uppercase text was normalized successfully while punctuation and emojis remained available to their own processing steps. Capitalization-based engineered features must still be calculated from raw text.
+
+### Numbers: decision changed to KEEP by default
+
+Generic number-to-word conversion worked for quantities such as "3 hours" -> "three hours", but it also converted identifiers such as "gate 25" and "flight 123". Structured expressions such as times, ranges, ratings, and alphanumeric identifiers can carry structure that should not be destroyed.
+
+The team therefore changed P1's default from number conversion ON to OFF. Number conversion remains available as a configurable experiment. Examples intentionally preserved by the revised P1 include 10/10, -9/10, 1:30, 1-4am, N351JB, gate 25, and flight 123.
+
+### Punctuation: decision changed to KEEP by default
+
+Blanket punctuation removal produced destructive transformations including 10/10 -> "10 10" and -9/10 -> "9 10". While contraction expansion protects negation before punctuation handling, ratings and character-level patterns remain vulnerable.
+
+The team therefore changed P1's punctuation mode from remove to keep. Word TF-IDF can apply its own tokenization, while character TF-IDF can retain potentially useful patterns such as !!!, ?!?, 10/10, and -9/10. Punctuation-derived structural features remain calculated from raw text.
+
+### Combined revised P1 manual verification
+
+The temporary revised configuration (contractions ON, emoji describe, numbers keep, lowercase ON, punctuation keep) produced the intended examples:
+- "I can't believe this!!!" -> "i can not believe this!!!"
+- "Terrible!!! [angry emoji]" -> "terrible!!! enraged face"
+- "10/10 service [smiling emoji]" -> "10/10 service smiling face with smiling eyes"
+- "-9/10 experience" -> "-9/10 experience"
+- "Waited 3 hours!!!" -> "waited 3 hours!!!"
+- "Flight N351JB delayed AGAIN?!" -> "flight n351jb delayed again?!"
+- "@AmericanAir I won't fly American Airlines again!!! [angry emoji]" -> "airline i will not fly airline again!!! enraged face"
+- "@USAirways #usairwaysfail" -> "airline airline fail"
+
+These examples are manual functional checks, not evidence that P1 improves clustering. P0/P1 and optional preprocessing choices will be compared later under the experiment design.
+
