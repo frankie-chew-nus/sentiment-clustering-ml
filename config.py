@@ -66,6 +66,8 @@ P0_CONFIG = {
     "replace_airline_hashtags": True,
     "replace_airline_names": True,
     "strip_hashtag_symbols": True,
+    "hashtag_segmentation_mode": "none",
+    "hashtag_segmentation_min_token_length": 7,
     "normalize_whitespace": True,
 }
 
@@ -83,8 +85,12 @@ P1_CONFIG = {
 # stopword-removal ON/OFF effects will be measured rather than assumed.
 P2_CONFIG = {
     **P1_CONFIG,
-    "segmentation_mode": "none",  # none, wordninja, symspell, hybrid
+    # Global ordinary-text segmentation remains OFF. P2 selectively segments
+    # non-airline hashtag bodies while hashtag provenance is still available.
+    "segmentation_mode": "none",
     "segmentation_min_token_length": 7,
+    "hashtag_segmentation_mode": "wordninja",
+    "hashtag_segmentation_min_token_length": 7,
     "correct_spelling": False,
     "symspell_dictionary_path": None,
     "max_edit_distance": 2,
