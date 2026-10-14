@@ -272,3 +272,23 @@ Lower-frequency false splits also included `cinnabons` -> `cinnabon s` and `pref
 
 This provides corpus-specific evidence against global Wordninja segmentation of ordinary tweet text. The final G3.3 recommendation is therefore: **enable Wordninja only for non-airline hashtag bodies in the P2 candidate; keep global ordinary-text segmentation OFF.** Noisy ordinary tokens such as `flightled`, `flighted`, and `flightr` should be handled, if at all, by a separate spelling/noise-normalization decision rather than by segmentation.
 
+## G3.4 investigation: malformed flight tokens and spelling-correction objective
+
+During the ordinary-text segmentation audit, a family of frequent malformed `flight*` tokens was discovered. A raw-text audit (no sentiment labels) found 46 flight-related token variants. High-frequency suspicious forms included `flightled` (508 token occurrences in the token audit), `flighted` (228), `flightr` (162), and `reflight` (53), alongside additional lower-frequency variants.
+
+Context inspection showed these are systematic corpus artifacts rather than simple intentional compounds. Repeated contexts included constructions such as `Cancelled Flightled flight`, `Cancelled Flighted flight`, `hours Late Flightr`, and `reFlight Booking Problems`. This explains why global Wordninja segmentation was inappropriate for them: it produced outputs such as `flight led`, `flight ed`, and `flight r`, which solve the wrong problem.
+
+### Sentiment-focused interpretation
+
+The project objective is sentiment clustering, not grammatical reconstruction of every tweet. In the observed contexts, the principal sentiment-bearing information usually remains in surrounding terms such as `cancelled`, `late`, `problems`, `delayed`, `terrible`, etc. The malformed tokens themselves primarily create vocabulary fragmentation/noise for word TF-IDF. Leaving them unchanged is therefore possible, but it creates extra artificial vocabulary dimensions; manually mapping each artifact could reduce that noise but would introduce dataset-specific handcrafted rules.
+
+### Decision: avoid handcrafted artifact mappings and evaluate generic correction
+
+The team does not want to maintain a handcrafted correction dictionary for these artifacts. Instead, return to the original preprocessing objective: determine whether a general spelling/noise-correction method can reduce vocabulary fragmentation while preserving sentiment-bearing terms.
+
+SymSpell will therefore be evaluated empirically on the actual unlabeled corpus vocabulary. The question is not whether it perfectly reconstructs the original English, but whether its corrections are useful for sentiment-oriented vectorization without damaging valid airline-domain, sentiment, abbreviation, airport, name, or Twitter vocabulary.
+
+Evaluation should classify changed tokens as useful correction, harmless normalization, or harmful correction and should consider token frequency so that high-frequency errors matter more than one-off errors. Existing configurable protected sentiment/domain and negation terms remain safeguards. No sentiment labels or sentiment-confidence values are to be used in this investigation.
+
+No artifact-specific code change is made at this stage. The next G3.4 experiment is a corpus-level SymSpell correction audit; spelling correction will be enabled in P2 only if that audit provides sufficient evidence.
+
