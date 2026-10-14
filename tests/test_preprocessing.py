@@ -121,7 +121,10 @@ def test_emoji_remove_mode():
 
 
 def test_emoji_describe_mode():
-    assert "angry face" in handle_emojis("bad 😡", mode="describe").lower()
+    result = handle_emojis("bad 😡", mode="describe").lower()
+    # Emoji labels can vary by emoji-package version (e.g. "enraged face").
+    assert "😡" not in result
+    assert any(label in result for label in ("angry face", "enraged face"))
 
 
 def test_number_conversion():
