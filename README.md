@@ -4,18 +4,19 @@ Modular Python code for the unsupervised airline-tweet sentiment clustering proj
 
 ## Current status
 
-- **Group 1 preprocessing:** URL removal, airline-reference normalization, removal of unrelated mentions, hashtag handling, and whitespace normalization.
-- **Configuration:** `P0_CONFIG` in `config.py` enables Group 1 operations by default.
-- **Tests:** `tests/test_preprocessing.py` covers the expected behavior for the current Group 1 rules.
+- **Group 1 preprocessing:** URL removal, generic airline-placeholder replacement, removal of unrelated mentions, hashtag handling, and whitespace normalization.
+- **Configuration:** `P0_CONFIG` in `config.py` enables the Group 1 operations by default.
+- **Tests:** `tests/test_preprocessing.py` covers the current Group 1 rules.
+- **Design rationale:** See [`docs/preprocessing_decisions.md`](docs/preprocessing_decisions.md) for the decisions and trade-offs behind airline-name normalization.
 
 ## Group 1 rules
 
 - Remove URLs.
-- Replace configured airline references with the generic token `airline`, whether they appear as an `@mention`, a `#hashtag`, or ordinary text. Examples: `@united` -> `airline`, `#United` -> `airline`, `United delayed my flight` -> `airline delayed my flight`.
+- Replace configured airline names with the generic token `airline` whether they occur as an `@mention`, a `#hashtag`, or ordinary text. For example, `@united United delayed my flight! #United` becomes `airline airline delayed my flight! airline`.
 - Remove non-airline `@mentions`.
-- Preserve non-airline hashtag content while removing the `#` marker; for example, `#WorstFlightEver` -> `WorstFlightEver`.
+- Preserve non-airline hashtag content while removing the `#` marker; for example, `#WorstFlightEver` becomes `WorstFlightEver`.
 - Keep the original raw tweet in a separate column; do not overwrite it.
-- The alias list includes potentially ambiguous names such as `American` and `Virgin`; inspect replacements on real tweets before treating the pipeline as final.
+- Some aliases, especially `American` and `Virgin`, can also be ordinary English words. Review replacements on actual tweets and revise the alias list if false replacements appear.
 
 ## Run tests
 
@@ -50,5 +51,5 @@ Expected output:
 ## Development notes
 
 - The repository currently keeps `preprocessing.py` and `config.py` at its root, so imports reflect that layout.
-- The module currently implements Group 1 only. Contractions, emoji handling, number conversion, segmentation, spelling correction, lemmatization, vectorization, clustering and evaluation are planned separately.
+- The module currently implements Group 1 only. Contractions, emoji handling, number conversion, segmentation, spelling correction, lemmatization, vectorization, clustering, and evaluation are planned separately.
 - Sentiment labels must not be passed to preprocessing, vectorization, or clustering. They are reserved for post-clustering evaluation.
