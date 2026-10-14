@@ -1,12 +1,17 @@
-"""Unit tests for Group 1 preprocessing."""
+"""Unit tests for Group 1 and Group 2 preprocessing."""
 
 import pytest
 
-from config import P0_CONFIG
+from config import P0_CONFIG, P1_CONFIG
 from preprocessing import (
+    convert_numbers,
+    expand_contractions,
+    handle_emojis,
+    lowercase_text,
     normalize_whitespace,
     preprocess_text,
     remove_mentions,
+    remove_punctuation,
     remove_urls,
     replace_airline_hashtags,
     replace_airline_mentions,
@@ -83,6 +88,64 @@ def test_config_can_disable_mention_and_url_processing():
     config["remove_other_mentions"] = False
     config["remove_urls"] = False
     assert preprocess_text("@united https://example.com", config) == "@united https://example.com"
+
+
+# Group 2 tests
+def test_expand_negation_contractions():
+    assert expand_contractions("I can't fly because they don't help") == "I can not fly because they do not help"
+
+
+def test_expand_common_tweet_spellings_without_apostrophes():
+    assert expand_contractions("i cant fly, we dont know") == "i can not fly, we do not know"
+
+
+def test_expand_contractions_before_punctuation_removal():
+    config = {**P1_CONFIG, "emoji_mode": "keep", "convert_numbers": False}
+    assert preprocess_text("I can't fly!!!", config) == "i can not fly"
+
+
+def test_lowercase_text():
+    assert lowercase_text("TERRIBLE Service") == "terrible service"
+
+
+def test_remove_punctuation_preserves_emoji_characters():
+    assert remove_punctuation("bad!!! 😡") == "bad     😡"
+
+
+def test_emoji_keep_mode():
+    assert handle_emojis("great 😊", mode="keep") == "great 😊"
+
+
+def test_emoji_remove_mode():
+    assert handle_emojis("great 😊", mode="remove") == "great "
+
+
+def test_emoji_describe_mode():
+    assert "angry face" in handle_emojis("bad 😡", mode="describe").lower()
+
+
+def test_number_conversion():
+    assert convert_numbers("3 hours") == "three hours"
+
+
+def test_number_conversion_does_not_change_times_or_ranges():
+    assert convert_numbers("at 1:30, wait 1-4am, flight N351JB") == "at 1:30, wait 1-4am, flight N351JB"
+
+
+def test_p1_configuration_expands_numbers_and_normalizes_text():
+    config = {**P1_CONFIG, "emoji_mode": "keep"}
+    result = preprocess_text("I can't wait 3 hours!!!", config)
+    assert result == "i can not wait three hours"
+
+
+def test_punctuation_mode_validation():
+    with pytest.raises(ValueError):
+        preprocess_text("test", {**P1_CONFIG, "punctuation_mode": "invalid"})
+
+
+def test_emoji_mode_validation():
+    with pytest.raises(ValueError):
+        handle_emojis("test", mode="invalid")
 
 
 def test_strip_hashtag_symbols_standalone():
