@@ -255,3 +255,26 @@ def test_stopword_removal_preserves_configured_sentiment_modifiers():
     assert "very" in tokens
     assert "good" in tokens
 
+def test_p2_segments_non_airline_hashtag_only():
+    result = preprocess_text("rebooked #badcustomerservice", P2_CONFIG)
+    assert result == "rebooked bad customer service"
+
+
+def test_p2_preserves_ordinary_long_words_from_wordninja():
+    result = preprocess_text("flightled flighted flightr rebooked", P2_CONFIG)
+    assert result == "flightled flighted flightr rebooked"
+
+
+def test_p2_airline_hashtag_normalization_precedes_segmentation():
+    result = preprocess_text("#usairwaysfail #unitedsucks #nothappy", P2_CONFIG)
+    assert result == "airline fail airline sucks not happy"
+
+
+def test_p0_does_not_segment_non_airline_hashtags():
+    assert preprocess_text("#badcustomerservice", P0_CONFIG) == "badcustomerservice"
+
+
+def test_p2_selective_segmentation_config():
+    assert P2_CONFIG["segmentation_mode"] == "none"
+    assert P2_CONFIG["hashtag_segmentation_mode"] == "wordninja"
+
