@@ -107,8 +107,13 @@ def test_expand_common_tweet_spellings_without_apostrophes():
     assert expand_contractions("i cant fly, we dont know") == "i can not fly, we do not know"
 
 
-def test_expand_contractions_before_punctuation_removal():
-    config = {**P1_CONFIG, "emoji_mode": "keep", "convert_numbers": False}
+def test_expand_contractions_before_optional_punctuation_removal():
+    config = {
+        **P1_CONFIG,
+        "emoji_mode": "keep",
+        "convert_numbers": False,
+        "punctuation_mode": "remove",
+    }
     assert preprocess_text("I can't fly!!!", config) == "i can not fly"
 
 
@@ -143,8 +148,13 @@ def test_number_conversion_does_not_change_times_or_ranges():
     assert convert_numbers("at 1:30, wait 1-4am, flight N351JB") == "at 1:30, wait 1-4am, flight N351JB"
 
 
-def test_p1_configuration_expands_numbers_and_normalizes_text():
-    config = {**P1_CONFIG, "emoji_mode": "keep"}
+def test_optional_number_conversion_and_punctuation_removal():
+    config = {
+        **P1_CONFIG,
+        "emoji_mode": "keep",
+        "convert_numbers": True,
+        "punctuation_mode": "remove",
+    }
     result = preprocess_text("I can't wait 3 hours!!!", config)
     assert result == "i can not wait three hours"
 
@@ -201,6 +211,22 @@ def test_p2_is_conservative_by_default():
     assert P2_CONFIG["lemmatize"] is False
     assert P2_CONFIG["remove_stopwords"] is False
 
+
+
+def test_p1_defaults_preserve_numbers_and_punctuation():
+    assert P1_CONFIG["convert_numbers"] is False
+    assert P1_CONFIG["punctuation_mode"] == "keep"
+
+
+def test_revised_p1_preserves_rating_and_expands_sentiment_text():
+    result = preprocess_text("10/10 service 😊", P1_CONFIG)
+    assert result.startswith("10/10 service ")
+    assert "😊" not in result
+    assert "smiling face with smiling eyes" in result.lower()
+
+
+def test_revised_p1_preserves_negative_rating():
+    assert preprocess_text("-9/10 experience", P1_CONFIG) == "-9/10 experience"
 
 def test_strip_hashtag_symbols_standalone():
     assert strip_hashtag_symbols("#good #bad-service") == "good bad-service"
