@@ -107,8 +107,13 @@ def test_expand_common_tweet_spellings_without_apostrophes():
     assert expand_contractions("i cant fly, we dont know") == "i can not fly, we do not know"
 
 
-def test_expand_contractions_before_punctuation_removal():
-    config = {**P1_CONFIG, "emoji_mode": "keep", "convert_numbers": False}
+def test_expand_contractions_before_optional_punctuation_removal():
+    config = {
+        **P1_CONFIG,
+        "emoji_mode": "keep",
+        "convert_numbers": False,
+        "punctuation_mode": "remove",
+    }
     assert preprocess_text("I can't fly!!!", config) == "i can not fly"
 
 
@@ -143,8 +148,13 @@ def test_number_conversion_does_not_change_times_or_ranges():
     assert convert_numbers("at 1:30, wait 1-4am, flight N351JB") == "at 1:30, wait 1-4am, flight N351JB"
 
 
-def test_p1_configuration_expands_numbers_and_normalizes_text():
-    config = {**P1_CONFIG, "emoji_mode": "keep"}
+def test_optional_number_conversion_and_punctuation_removal():
+    config = {
+        **P1_CONFIG,
+        "emoji_mode": "keep",
+        "convert_numbers": True,
+        "punctuation_mode": "remove",
+    }
     result = preprocess_text("I can't wait 3 hours!!!", config)
     assert result == "i can not wait three hours"
 
