@@ -1,4 +1,4 @@
-"""Modular Group 1 tweet preprocessing.
+""""Modular Group 1 tweet preprocessing.
 
 All functions are deterministic and preserve the input unless their specific
 transformation applies. Original tweets should be stored separately.
@@ -11,20 +11,24 @@ from typing import Collection, Mapping
 from config import AIRLINE_HASHTAG_ALIASES, P0_CONFIG
 
 # Recognize common URL forms without swallowing adjacent sentence punctuation.
-_URL_RE = re.compile(r'(?i)\b(?:https?://|www\.)[^\s<>]+')
-_MENTION_RE = re.compile(r'(?<!\w)@[A-Za-z0-9_]+')
-_HASHTAG_RE = re.compile(r'(?<!\w)#([A-Za-z0-9_]+)')
-_WHITESPACE_RE = re.compile(r'\s+')
+_URL_RE = re.compile(r'(?i)\\b(?:https?://|www\\.)[^\\s<>]+')
+_MENTION_RE = re.compile(r'(?<!\\w)@[A-Za-z0-9_]+')
+_HASHTAG_RE = re.compile(r'(?<!\\w)#([A-Za-z0-9_]+)')
+_WHITESPACE_RE = re.compile(r'\\s+')
+_SPACE_BEFORE_PUNCTUATION_RE = re.compile(r'\\s+([.,!?;:])')
 _URL_TRAILING_PUNCTUATION = '.,!?;:)]}'
 
 
 def remove_urls(text: str) -> str:
-    """Remove HTTP(S)/www URLs, preserving trailing sentence punctuation."""
+    """Remove HTTP(S)/www URLs while retaining adjacent sentence punctuation."""
     def replacement(match: re.Match[str]) -> str:
         url = match.group(0)
         trailing = url[len(url.rstrip(_URL_TRAILING_PUNCTUATION)):]
         return trailing
-    return _URL_RE.sub(replacement, text)
+
+    text = _URL_RE.sub(replacement, text)
+    # If a URL was followed by a period, avoid leaving "sentence .".
+    return _SPACE_BEFORE_PUNCTUATION_RE.sub(r'\\1', text)
 
 
 def remove_mentions(text: str) -> str:
@@ -71,10 +75,8 @@ def preprocess_text(text: str, config: Mapping[str, bool] | None = None) -> str:
     if not isinstance(text, str):
         raise TypeError('text must be a string')
     settings = P0_CONFIG if config is None else config
-    if settings.get('strip_hashtag_symbols', False) and not settings.get('remove_airline_hashtags', False):
-        # Allowed: removing # without removing airline hashtags is a valid ablation.
-        pass
     for name, function in _STEPS:
         if settings.get(name, False):
             text = function(text)
     return text
+"
