@@ -254,3 +254,21 @@ Recommended conceptual order: (1) detect/extract the hashtag while provenance is
 
 The current Group 1 implementation strips `#` before Group 3, which loses hashtag provenance. Before enabling selective hashtag segmentation, the architecture should be revised so hashtag provenance survives until the hashtag-specific segmentation decision has been made. This finding is based on unlabeled corpus structure and manual inspection, not sentiment labels.
 
+### Ordinary-text segmentation audit
+
+To test the trade-off of hashtag-only segmentation, hashtags, mentions, and URLs were excluded and long ordinary-text tokens (length >= 7) were audited separately. The corpus contained **4,677 unique long ordinary-text tokens**. Wordninja proposed a split for **562** of them.
+
+High-frequency problematic examples included:
+
+| Ordinary token | Count | Wordninja output | Assessment |
+|---|---:|---|---|
+| `flightled` | 508 | `flight led` | Incorrect interpretation; this is a noisy-token/correction problem, not a compound-segmentation problem |
+| `flighted` | 228 | `flight ed` | Incorrect split |
+| `flightr` | 162 | `flight r` | Incorrect split |
+| `rebooked` | 139 | `re booked` | Damages a valid word |
+| `reflight` | 52 | `re flight` | Questionable and not sufficient evidence for global segmentation |
+
+Lower-frequency false splits also included `cinnabons` -> `cinnabon s` and `prefundia` -> `pre fund i a`.
+
+This provides corpus-specific evidence against global Wordninja segmentation of ordinary tweet text. The final G3.3 recommendation is therefore: **enable Wordninja only for non-airline hashtag bodies in the P2 candidate; keep global ordinary-text segmentation OFF.** Noisy ordinary tokens such as `flightled`, `flighted`, and `flightr` should be handled, if at all, by a separate spelling/noise-normalization decision rather than by segmentation.
+
