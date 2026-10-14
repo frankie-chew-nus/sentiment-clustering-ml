@@ -86,3 +86,18 @@ Names such as American and Virgin can also be ordinary English words. Whole-word
 - Continue to expand aliases and suffixes based on label-free frequency and manual text inspection.
 - This remains a curated alias/suffix method, not a general airline entity recognizer.
 - Any possible clustering benefit from this normalization must be evaluated later; it is a design hypothesis, not an established performance improvement.
+
+
+## Group 2: Text normalization (design record)
+
+Group 2 adds independently configurable transforms after Group 1 cleaning. The standard P1 defaults are:
+
+- Expand common contractions and common informal no-apostrophe forms (e.g. can't/cant -> can not; don't/dont -> do not) before punctuation removal.
+- Convert standalone numbers to English words (initially ON). Clock times, hyphenated ranges, and alphanumeric identifiers are preserved by the number-token pattern. Number conversion can still change standalone numbers used as identifiers; inspect examples and compare with the setting disabled during ablation.
+- Lowercase text (ON). Capitalization features must be calculated from original raw text.
+- Punctuation mode is configurable: remove or keep. Removal replaces Unicode punctuation with spaces; emoji symbols are not treated as punctuation by this function.
+- Emoji mode is configurable: describe, keep, or remove. P1 starts with describe using the `emoji` library.
+
+Contraction expansion is intentionally conservative for ambiguous forms such as "I'd" and "he's", which are not expanded by the custom mapping. Emoji descriptions may vary with the installed emoji package version. The pipeline requires `emoji` and `num2words` for P1's default describe/number settings; P0 does not call these optional imports.
+
+The order is Group 1 cleanup -> contraction expansion -> emoji handling -> number conversion -> lowercase -> punctuation mode -> whitespace normalization. Contraction expansion precedes punctuation processing so negation is preserved. Feature extraction remains based on raw text. These defaults are hypotheses for evaluation, not evidence that P1 is better than P0.
