@@ -148,8 +148,15 @@ def replace_airline_hashtags(
     text: str,
     aliases: Collection[str] = AIRLINE_ALIASES,
     suffix_rules: Collection[str] = AIRLINE_HASHTAG_SUFFIX_RULES,
+    segmentation_method: str = "none",
+    segmentation_min_token_length: int = 7,
 ) -> str:
-    """Normalize exact airline hashtags and approved airline-prefixed suffixes."""
+    """Normalize airline hashtags and optionally segment other hashtag bodies.
+
+    Airline-specific handling always runs first. Word segmentation, when
+    enabled, is restricted to non-airline hashtag bodies while hashtag
+    provenance is still known; ordinary tweet words are not segmented here.
+    """
     alias_set = _normalized_aliases(aliases)
     suffix_set = {_compact(suffix) for suffix in suffix_rules}
     ordered_aliases = sorted(alias_set, key=len, reverse=True)
@@ -164,6 +171,13 @@ def replace_airline_hashtags(
                 suffix = compact[len(alias):]
                 if suffix in suffix_set:
                     return f"airline {suffix}"
+
+        if segmentation_method != "none":
+            return split_compound_words(
+                token,
+                method=segmentation_method,
+                min_token_length=segmentation_min_token_length,
+            )
         return token
 
     return _HASHTAG_RE.sub(replacement, text)
@@ -263,7 +277,6 @@ _GROUP1_STEPS = (
     ("remove_urls", remove_urls),
     ("replace_airline_mentions", replace_airline_mentions),
     ("remove_other_mentions", remove_mentions),
-    ("replace_airline_hashtags", replace_airline_hashtags),
     ("replace_airline_names", replace_airline_names),
     ("strip_hashtag_symbols", strip_hashtag_symbols),
 )
@@ -276,7 +289,23 @@ def preprocess_text(text: str, config: Mapping[str, Any] | None = None) -> str:
         raise TypeError("text must be a string")
     settings = P0_CONFIG if config is None else config
 
-    for name, function in _GROUP1_STEPS:
+    # Run URL/mention cleanup first, but handle hashtags before ordinary
+    # airline-name replacement so hashtag provenance can drive selective
+    # segmentation.
+    for name, function in _GROUP1_STEPS[:3]:
+        if settings.get(name, False):
+            text = function(text)
+
+    if settings.get("replace_airline_hashtags", False):
+        text = replace_airline_hashtags(
+            text,
+            segmentation_method=str(settings.get("hashtag_segmentation_mode", "none")),
+            segmentation_min_token_length=int(
+                settings.get("hashtag_segmentation_min_token_length", 7)
+            ),
+        )
+
+    for name, function in _GROUP1_STEPS[3:]:
         if settings.get(name, False):
             text = function(text)
 
