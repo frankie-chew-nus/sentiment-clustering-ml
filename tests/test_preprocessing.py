@@ -109,7 +109,7 @@ def test_lowercase_text():
 
 
 def test_remove_punctuation_preserves_emoji_characters():
-    assert remove_punctuation("bad!!! 😡") == "bad     😡"
+    assert remove_punctuation("bad!!! 😡") == "bad    😡"
 
 
 def test_emoji_keep_mode():
