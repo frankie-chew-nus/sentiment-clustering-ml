@@ -142,3 +142,34 @@ Explicit airline names must still be normalized. In particular:
 
 The alias pattern matches whole words/phrases and orders longer aliases before shorter aliases, so the explicit phrase "American Airlines" is treated as a single airline name. This is covered by a regression test. The false-positive risk for standalone words is documented as an accepted limitation, not an intended semantic distinction.
 
+## Group 1 real-dataset audit (Colab)
+
+**Audit method:** A reproducible sample of 100 tweets was processed using `P0_CONFIG`, and a separate sample containing the terms "American" or "Virgin" was inspected. The audit used tweet text only and did not use sentiment labels.
+
+### Results that matched the intended rules
+
+- The 100-tweet sample reported **100 changed, 0 unchanged**. This is consistent with a sample drawn from a dataset dominated by airline @mentions; it is not an accuracy score and does not imply every transformation was correct.
+- Common handles such as `@SouthwestAir`, `@AmericanAir`, `@JetBlue`, and `@USAirways` were replaced with `airline`.
+- The following targeted hashtag checks produced the expected output:
+  - `#United` -> `airline`
+  - `#WorstFlightEver` -> `WorstFlightEver`
+  - `#usairwaysfail` -> `airline fail`
+  - `#unitedsucks` -> `airline sucks`
+  - `#badcustomerservice` -> `badcustomerservice` (Group 1 removes the hash marker; general segmentation is not part of Group 1)
+
+### Known false replacements observed and accepted
+
+The ambiguous-term sample showed examples including:
+
+- `Virgin Islands` -> `airline Island`
+- `Virgin Mobile` -> `airline mobile`
+- Ordinary uses of `American` may be replaced with `airline`
+
+These are false replacements when the word does not refer to an airline. The team explicitly chose to accept this trade-off for now in order to keep alias handling simple, rather than add context-aware entity disambiguation. This limitation should remain visible in the methodology and can be revisited if it materially affects later clustering results.
+
+### Group 1 audit conclusion
+
+Group 1's tested behavior matches the team's current rules, including generic airline placeholders and preservation of the suffix for the two agreed airline sentiment hashtags. Unit tests and this small manual audit are useful validation, but they do not establish that every airline alias or every tweet is handled correctly. The alias list remains curated, and the ambiguity trade-off is accepted rather than resolved.
+
+**Next step:** Proceed to Group 2 normalization while retaining raw tweet text separately. Keep this audit record as the rationale for the current Group 1 behavior.
+
