@@ -292,3 +292,66 @@ Evaluation should classify changed tokens as useful correction, harmless normali
 
 No artifact-specific code change is made at this stage. The next G3.4 experiment is a corpus-level SymSpell correction audit; spelling correction will be enabled in P2 only if that audit provides sufficient evidence.
 
+## G3.4 SymSpell corpus audit and decision
+
+Following the malformed-token investigation, generic SymSpell correction was evaluated against the unlabeled ordinary-text vocabulary rather than using handcrafted artifact mappings. The standard `symspellpy` English frequency dictionary `frequency_dictionary_en_82_765.txt` was used with maximum edit distance 2. Sentiment labels and sentiment-confidence values were not used.
+
+### Small diagnostic
+
+The initial diagnostic showed mixed behavior. Useful changes included `flightr` -> `flight`, `terribl` -> `terrible`, and `disapointed` -> `disappointed`. Important harmful changes included `reflight` -> `preflight` and `rebooked` -> `rebooted`. `flightled` became `flighted`, while `flighted` remained unchanged, so SymSpell did not reliably solve the systematic malformed `flight*` family.
+
+### Corpus-wide audit
+
+To focus on changes with material corpus impact, ordinary-text vocabulary terms occurring at least 5 times were audited.
+
+- Frequent vocabulary terms audited: **2,852**
+- Unique terms SymSpell would change: **77 / 2,852 (2.7%)**
+- Audited token occurrences: **224,765**
+- Token occurrences affected by proposed corrections: **2,723 / 224,765 (1.2%)**
+
+Although the overall change rate was low, several high-frequency changes were harmful for sentiment or airline/Twitter meaning. Examples included:
+
+| Original | SymSpell | Count | Concern |
+|---|---|---:|---|
+| `flightled` | `flighted` | 508 | Does not resolve the systematic artifact |
+| `didn` | `did` | 202 | Can destroy negation intent |
+| `doesn` | `does` | 169 | Can destroy negation intent |
+| `flightr` | `flight` | 162 | Useful correction |
+| `fleek` | `fleet` | 150 | Changes meaning |
+| `rebooked` | `rebooted` | 139 | Damages valid airline-domain vocabulary |
+| `mins` | `mind` | 127 | Damages a common time abbreviation |
+| `couldn` | `could` | 96 | Can destroy negation intent |
+| `wasn` | `was` | 90 | Can destroy negation intent |
+| `cust` | `just` | 55 | Damages an airline/customer-service abbreviation |
+| `wouldn` | `would` | 53 | Can destroy negation intent |
+| `reflight` | `preflight` | 52 | Changes meaning |
+| `aren` | `are` | 48 | Can destroy negation intent |
+| `flighting` | `lighting` | 44 | Changes meaning |
+| `checkin` | `checking` | 38 | Damages airline-domain vocabulary |
+| `shouldn` | `should` | 35 | Can destroy negation intent |
+| `yall` | `all` | 32 | Damages informal Twitter language |
+| `hasn` | `has` | 30 | Can destroy negation intent |
+| `haha` | `hama` | 30 | Introduces unrelated vocabulary |
+| `airplane` | `airline` | 22 | Changes meaning |
+| `onboard` | `inboard` | 21 | Changes meaning |
+| `tweeting` | `sweeting` | 20 | Damages Twitter vocabulary |
+| `tweets` | `sweets` | 17 | Damages Twitter vocabulary |
+| `dmed` | `died` | 15 | Changes social-media meaning and may introduce false sentiment |
+| `deplane` | `replace` | 13 | Damages airline-domain vocabulary |
+| `flightation` | `flirtation` | 13 | Introduces unrelated vocabulary |
+| `trueblue` | `treble` | 11 | Damages domain/brand vocabulary |
+| `flts` | `fits` | 10 | Damages flight abbreviation |
+| `deplaned` | `replaced` | 8 | Damages airline-domain vocabulary |
+| `resched` | `reached` | 7 | Damages rescheduling abbreviation |
+| `assult` | `assault` | 5 | Useful correction |
+
+Additional potentially harmful corrections included `tmrw` -> `term`, `intl` -> `into`, `bday` -> `day`, `thnx` -> `the`, `lmao` -> `lao`, `carseat` -> `carpet`, and `vieques` -> `venues`.
+
+### Sentiment-oriented interpretation
+
+The key criterion is not perfect spelling or grammatical reconstruction; it is whether preprocessing reduces vocabulary fragmentation without damaging sentiment-bearing context. SymSpell changed only 1.2% of audited token occurrences, but some of those changes affected high-frequency negation fragments and valid airline/Twitter vocabulary. In particular, corrections such as `didn` -> `did`, `doesn` -> `does`, `couldn` -> `could`, and similar forms risk weakening polarity information, while corrections such as `rebooked` -> `rebooted` introduce unrelated concepts.
+
+### Decision
+
+**Generic SymSpell spelling correction remains OFF for P2.** The potential benefit from genuine typo correction does not justify the observed semantic and sentiment risks in this corpus. The team will not add a large handcrafted exception list merely to make generic SymSpell safe, because that would undermine the goal of a general, reproducible preprocessing method. The systematic malformed `flight*` artifacts are acknowledged as corpus noise and are not given handcrafted mappings at this stage.
+
