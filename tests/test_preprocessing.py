@@ -39,6 +39,10 @@ def test_multiword_airline_names_become_generic_token():
     assert replace_airline_names("Delta Air Lines and Virgin America") == "airline and airline"
 
 
+def test_other_airline_names_in_sentence_are_replaced():
+    assert replace_airline_names("I flew with JetBlue and Southwest Airlines") == "I flew with airline and airline"
+
+
 def test_non_airline_hashtags_keep_content():
     assert preprocess_text("#WorstFlightEver #Happy") == "WorstFlightEver Happy"
 
