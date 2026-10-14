@@ -10,25 +10,12 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Collection
 
-from config import AIRLINE_ALIASES
-
-_NEGATION_WORDS = frozenset({
-    "no", "not", "nor", "never", "none", "nobody", "nothing", "neither",
-    "nowhere", "cannot", "can't", "cant", "don't", "dont", "doesn't",
-    "doesnt", "didn't", "didnt", "isn't", "isnt", "aren't", "arent",
-    "wasn't", "wasnt", "weren't", "werent", "haven't", "havent",
-    "hasn't", "hasnt", "hadn't", "hadnt", "won't", "wont", "wouldn't",
-    "wouldnt", "shouldn't", "shouldnt", "couldn't", "couldnt",
-})
-
-_PROTECTED_WORDS = frozenset({
-    "airline", "flight", "flights", "delayed", "delay", "cancelled", "canceled",
-    "cancel", "refund", "baggage", "luggage", "service", "terrible", "great",
-    "good", "bad", "worst", "best", "happy", "unhappy", "angry", "annoyed",
-    "disappointed", "awesome", "awful", "love", "hate", "not", "no", "nor",
-    "never", "none", "cannot", "can't", "cant", "don't", "dont", "doesn't",
-    "doesnt", "didn't", "didnt", "isn't", "isnt", "won't", "wont",
-})
+from config import (
+    AIRLINE_ALIASES,
+    NEGATION_WORDS,
+    SENTIMENTSENTIMENT_PROTECTED_WORDS,
+    STOPWORDSENTIMENT_PROTECTED_WORDS,
+)
 
 
 def _compact(value: str) -> str:
@@ -131,7 +118,7 @@ def correct_spelling(
     except ImportError as exc:
         raise ImportError("Install symspellpy to use spelling correction.") from exc
 
-    protected = set(_PROTECTED_WORDS) | set(_NEGATION_WORDS)
+    protected = set(SENTIMENT_PROTECTED_WORDS) | set(NEGATION_WORDS)
     protected |= {word.casefold() for word in (protected_words or set())}
     protected |= {_compact(alias) for alias in AIRLINE_ALIASES}
 
@@ -175,7 +162,7 @@ def lemmatize_text(
 ) -> str:
     """Lemmatize with spaCy and preserve negation words verbatim by default."""
     nlp = _load_spacy(model)
-    protected = _NEGATION_WORDS if preserve_negation else set()
+    protected = NEGATION_WORDS if preserve_negation else set()
     doc = nlp(text)
     output = []
     for token in doc:
@@ -200,10 +187,19 @@ def remove_stopwords(
     text: str,
     model: str = "en_core_web_sm",
     preserve_negation: bool = True,
+    protected_words: Collection[str] | None = None,
 ) -> str:
-    """Remove spaCy stopwords, preserving negation terms by default."""
+    """Remove spaCy stopwords while preserving configurable sentiment terms.
+
+    By default, configured sentiment/intensifier words are protected. Negation
+    terms are additionally protected when preserve_negation=True. Callers can
+    add experiment-specific protected words without editing processing logic.
+    """
     stopwords = _load_stopwords(model)
-    protected = _NEGATION_WORDS if preserve_negation else set()
+    protected = set(STOPWORD_PROTECTED_WORDS)
+    if not preserve_negation:
+        protected -= set(NEGATION_WORDS)
+    protected |= {word.casefold() for word in (protected_words or set())}
     tokens = re.findall(r"\w+(?:'\w+)?|[^\w\s]", text)
     return " ".join(
         token for token in tokens
