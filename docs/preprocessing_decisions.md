@@ -355,3 +355,13 @@ The key criterion is not perfect spelling or grammatical reconstruction; it is w
 
 **Generic SymSpell spelling correction remains OFF for P2.** The potential benefit from genuine typo correction does not justify the observed semantic and sentiment risks in this corpus. The team will not add a large handcrafted exception list merely to make generic SymSpell safe, because that would undermine the goal of a general, reproducible preprocessing method. The systematic malformed `flight*` artifacts are acknowledged as corpus noise and are not given handcrafted mappings at this stage.
 
+## P2 final lexical-normalization configuration
+
+After the Group 3 investigations, P2 now enables spaCy lemmatization and stopword removal with the existing configured protection lists. This follows the sentiment-clustering objective: collapse morphological variants while removing low-information grammatical vocabulary, but retain negation, sentiment/domain terms, and configured intensifiers.
+
+Manual lemmatization checks previously showed useful normalization such as `flights` -> `flight`, `delayed`/`delaying` -> `delay`, `cancelled` -> `cancel`, `disappointed` -> `disappoint`, and `responded` -> `respond`, while `not` and `never` were preserved. Forms of `be` may collapse (`was`/`is`/`am`/`are` -> `be`), reducing grammatical vocabulary that is not central to the sentiment objective.
+
+Manual stopword checks showed the intended protected behavior: `the flight was delayed` -> `flight delayed`; `I am not satisfied` -> `not satisfied`; `I will never fly again` -> `never fly`; `the service was very good` -> `service very good`; `I am really disappointed with the service` -> `really disappointed service`; and `this is extremely bad` -> `extremely bad`.
+
+Final P2 Group 3 defaults are therefore: selective Wordninja segmentation for non-airline hashtag bodies ON; global ordinary-text segmentation OFF; generic SymSpell spelling correction OFF; lemmatization ON; stopword removal ON; negation protection ON. Stopword removal uses the configured protection sets for negation, sentiment/domain terms, and intensifiers. These preprocessing choices remain hypotheses whose downstream value will be tested by the clustering experiments; functional validation does not by itself establish improved clustering quality.
+
