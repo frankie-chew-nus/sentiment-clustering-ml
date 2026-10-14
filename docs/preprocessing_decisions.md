@@ -234,3 +234,41 @@ The current categories are:
 
 These are configurable research choices, not claims that the lists are complete or optimal. They can be revised from label-free corpus analysis and manual review without changing the processing functions. The stopword function also accepts additional protected_words for experiment-specific overrides.
 
+## G3.3 corpus audit: hashtag-focused word segmentation
+
+A label-free corpus audit found 2,006 unique hashtags. Among the most frequent hashtags, many sentiment-bearing expressions were intentionally concatenated, including `neveragain`, `badservice`, `badcustomerservice`, `nothappy`, `notcool`, `worstairlineever`, `worstcustomerservice`, `poorcustomerservice`, `customerservicefail`, and `greatservice`.
+
+The diagnostic compared `none`, Wordninja, and the current hybrid method on 63 frequent hashtag candidates of length >= 7. At least one method changed 35 candidates. In this sample, Wordninja and the current hybrid produced the same displayed outputs, so the hybrid did not demonstrate an advantage over Wordninja in this audit.
+
+Useful examples included `neveragain` -> `never again`, `badcustomerservice` -> `bad customer service`, `nothappy` -> `not happy`, `notcool` -> `not cool`, `worstcustomerservice` -> `worst customer service`, `poorcustomerservice` -> `poor customer service`, `customerservicefail` -> `customer service fail`, and `greatservice` -> `great service`.
+
+False or low-quality splits were also observed, including `custserv` -> `cus tse rv` and `brandmance` -> `brand man ce`.
+
+### Interpretation and recommendation
+
+Hashtags are more likely than ordinary long words to contain intentional concatenation because multi-word hashtag phrases are conventionally written without spaces. The audit therefore supports a narrower use of segmentation: apply Wordninja selectively to hashtag-derived compound tokens rather than indiscriminately to all long tokens in ordinary tweet text.
+
+Airline-specific hashtag normalization should take precedence over generic segmentation. For example, the existing rules `#usairwaysfail` -> `airline fail` and `#unitedsucks` -> `airline sucks` are preferable to allowing generic segmentation to reintroduce airline names.
+
+Recommended conceptual order: (1) detect/extract the hashtag while provenance is known; (2) apply airline-specific hashtag normalization first; (3) for remaining non-airline hashtags, optionally segment the hashtag body with Wordninja; (4) continue with the normal text pipeline and later lemmatization; (5) do not apply Wordninja globally to ordinary long words unless a separate experiment supports it.
+
+The current Group 1 implementation strips `#` before Group 3, which loses hashtag provenance. Before enabling selective hashtag segmentation, the architecture should be revised so hashtag provenance survives until the hashtag-specific segmentation decision has been made. This finding is based on unlabeled corpus structure and manual inspection, not sentiment labels.
+
+### Ordinary-text segmentation audit
+
+To test the trade-off of hashtag-only segmentation, hashtags, mentions, and URLs were excluded and long ordinary-text tokens (length >= 7) were audited separately. The corpus contained **4,677 unique long ordinary-text tokens**. Wordninja proposed a split for **562** of them.
+
+High-frequency problematic examples included:
+
+| Ordinary token | Count | Wordninja output | Assessment |
+|---|---:|---|---|
+| `flightled` | 508 | `flight led` | Incorrect interpretation; this is a noisy-token/correction problem, not a compound-segmentation problem |
+| `flighted` | 228 | `flight ed` | Incorrect split |
+| `flightr` | 162 | `flight r` | Incorrect split |
+| `rebooked` | 139 | `re booked` | Damages a valid word |
+| `reflight` | 52 | `re flight` | Questionable and not sufficient evidence for global segmentation |
+
+Lower-frequency false splits also included `cinnabons` -> `cinnabon s` and `prefundia` -> `pre fund i a`.
+
+This provides corpus-specific evidence against global Wordninja segmentation of ordinary tweet text. The final G3.3 recommendation is therefore: **enable Wordninja only for non-airline hashtag bodies in the P2 candidate; keep global ordinary-text segmentation OFF.** Noisy ordinary tokens such as `flightled`, `flighted`, and `flightr` should be handled, if at all, by a separate spelling/noise-normalization decision rather than by segmentation.
+
