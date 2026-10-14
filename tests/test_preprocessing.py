@@ -14,7 +14,7 @@ from preprocessing import (
 
 
 def test_remove_urls_preserves_sentence_punctuation():
-    assert remove_urls("Look here https://example.com/path.") == "Look here ."
+    assert remove_urls("Look here https://example.com/path.") == "Look here."
 
 
 def test_remove_mentions():
@@ -40,7 +40,7 @@ def test_group1_example():
 
 
 def test_normalize_whitespace():
-    assert normalize_whitespace("  too   many\\n spaces  ") == "too many spaces"
+    assert normalize_whitespace("  too   many\n spaces  ") == "too many spaces"
 
 
 def test_invalid_input_raises_type_error():
