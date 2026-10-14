@@ -1,72 +1,88 @@
-# Preprocessing Decision Record: Airline Identity Normalization
+# Preprocessing Decision Record: Airline Alias Audit and Hashtag Suffixes
 
-**Status:** Agreed design; validate against dataset examples before treating alias coverage as final.  
-**Module:** Group 1 basic cleaning (`preprocessing.py`, `config.py`)  
+**Status:** Agreed design; validate against tweet examples before treating alias coverage as final.  
+**Module:** Group 1 (preprocessing.py, config.py)  
 **Date recorded:** 2026-10-14
 
-## Context
+## 1. Goal
 
-The project aims to discover sentiment-aligned groups of airline tweets (negative, neutral, positive), not to group tweets by which airline they discuss. If airline names remain as distinctive terms, clustering may reflect airline identity or airline-specific vocabulary as well as sentiment.
+The project is intended to cluster tweets by overall sentiment, not by which airline is being discussed. Distinctive airline names can introduce airline-identity information into text vectors, so configured airline aliases are normalized to the generic token "airline".
 
-The earlier Group 1 implementation removed an airline only when it appeared as an `@mention` or exact `#hashtag`. This left ordinary references such as "United delayed my flight" unchanged. The team clarified that this was too narrow.
+## 2. Dataset-driven findings
 
-## Decision
+A frequency audit was run on the dataset's raw tweet text, without using sentiment labels. The most frequent mentions included:
 
-Replace configured airline references with the generic token `airline` in all three forms:
+| Mention | Count | Decision |
+|---|---:|---|
+| @united | 3,893 | Already covered |
+| @usairways | 2,998 | Already covered |
+| @americanair | 2,961 | Add alias |
+| @southwestair | 2,458 | Already covered |
+| @jetblue | 2,248 | Already covered |
+| @virginamerica | 517 | Already covered |
+| @delta | 68 | Already covered |
+| @virginatlantic | 9 | Add as airline alias; normalize to airline |
 
-- **Handle:** `@united` -> `airline`
-- **Hashtag:** `#United` -> `airline`
-- **Ordinary text:** `United delayed my flight` -> `airline delayed my flight`
+Frequent hashtags included:
 
-Other rules:
+| Hashtag | Count | Decision |
+|---|---:|---|
+| #jetblue | 48 | Normalize to airline |
+| #unitedairlines | 45 | Normalize to airline |
+| #usairways | 30 | Normalize to airline |
+| #americanairlines | 27 | Normalize to airline |
+| #usairwaysfail | 26 | Normalize to airline fail |
+| #unitedsucks | 10 | Normalize to airline sucks |
 
-- Remove non-airline `@mentions`.
-- Preserve non-airline hashtag text but remove its leading `#`: `#WorstFlightEver` -> `WorstFlightEver`.
-- Remove URLs and normalize whitespace.
-- Keep the original tweet unchanged in a separate raw-text column.
-- Do not use the dataset sentiment label or confidence during preprocessing, vectorization, or clustering. They are for post-clustering evaluation only.
+Counts above are from the user's dataset frequency audit. They are descriptive text-frequency counts, not sentiment-label-based analysis.
 
-## Why use a placeholder instead of deleting the airline name?
+## 3. Decisions
 
-The goal is to suppress airline identity while retaining the sentence's structure. For example:
+1. Replace known airline handles with airline.
+2. Remove non-airline handles.
+3. Replace exact known airline hashtags with airline.
+4. For selected airline-prefixed sentiment hashtags, replace the airline prefix with airline and preserve the recognized suffix:
+   - #usairwaysfail -> airline fail
+   - #unitedsucks -> airline sucks
+5. Preserve other hashtag text while dropping only #, e.g. #WorstFlightEver -> WorstFlightEver.
+6. Replace configured airline names in ordinary text too, e.g. United delayed my flight -> airline delayed my flight.
+7. Keep original raw text in a separate column and do not overwrite it.
+8. Keep the dataset sentiment label and confidence out of preprocessing, vectorization, and clustering. Use them only for post-clustering evaluation.
 
-- Deletion: "United delayed my flight" -> "delayed my flight"
-- Placeholder: "United delayed my flight" -> "airline delayed my flight"
+## 4. Why preserve sentiment suffixes?
 
-The placeholder preserves a signal that an airline is the actor/topic while avoiding a different token for every airline. This is a design hypothesis, not a guaranteed clustering improvement; we can test it later against alternatives if needed.
+Removing a whole hashtag such as #usairwaysfail would discard the sentiment-bearing word fail. Converting it to airline fail suppresses the brand name while keeping a potentially useful sentiment signal. The same reasoning applies to #unitedsucks -> airline sucks.
 
-## Alias configuration
+The current implementation uses a configurable suffix list rather than splitting every hashtag with an airline prefix. This is intentionally conservative to reduce false splits, but the suffix list may need expansion after reviewing additional high-frequency hashtags.
 
-The current aliases are stored centrally in `AIRLINE_ALIASES` in `config.py`. They cover configured forms for United, Delta, American, US Airways, Southwest, JetBlue, and Virgin America, including common spaced and concatenated spellings.
+## 5. Alias coverage and ambiguity
 
-The list should be reviewed against the actual dataset. There is a known ambiguity: "American" and "Virgin" can be ordinary English words as well as parts of airline names. Whole-word matching prevents partial matches inside longer words, but it cannot determine the intended meaning in every sentence. Inspect a sample of replacements for false positives before full-dataset use.
+The aliases are centralized in AIRLINE_ALIASES in config.py. This update adds americanair and virginatlantic, based on observed dataset handles. Note that virginatlantic is not the same brand as Virgin America, but the team explicitly chose to normalize that mention as a generic airline reference too.
 
-## Alternatives considered
+Names such as American and Virgin can also be ordinary English words. Whole-word matching reduces partial matches but cannot resolve every semantic ambiguity. Review real before/after examples for false replacements before full-dataset processing.
 
-1. **Remove only @mentions and #hashtags.** Rejected because ordinary mentions such as "United delayed my flight" would still preserve airline identity.
-2. **Delete airline names wherever they occur.** Rejected as the default because deletion can make sentences less informative or grammatically awkward.
-3. **Replace airline references with a generic token.** Selected because it suppresses brand identity but retains a placeholder for the entity.
+## 6. Alternatives discussed
 
-## Implementation order
+- Remove only @mentions and airline hashtags: rejected because ordinary text references such as "United delayed my flight" would retain airline identity.
+- Delete airline names: not selected as the default because this can remove useful sentence structure.
+- Replace airline names with a generic placeholder: selected because it suppresses brand identity while preserving an entity placeholder.
+- Drop the entire airline-prefixed sentiment hashtag: not selected for known suffixes because it would discard sentiment-bearing words.
+- Split every concatenated hashtag automatically: not selected here; segmentation tools made incorrect splits in a previous benchmark. The current approach only splits recognized airline prefixes plus configured suffixes.
+
+## 7. Implementation order
 
 1. Remove URLs.
-2. Replace configured airline @mentions with `airline`.
+2. Replace configured airline @mentions with airline.
 3. Remove remaining non-airline @mentions.
-4. Replace configured airline hashtags with `airline`.
-5. Replace configured airline names in ordinary text with `airline`.
-6. Remove `#` from remaining hashtags while preserving their words.
+4. Normalize exact airline hashtags and approved airline-prefixed sentiment hashtags.
+5. Replace configured airline names in ordinary text.
+6. Remove # from other hashtags while retaining content.
 7. Normalize whitespace.
 
-Specialized hashtag/mention handling runs before ordinary text replacement so prefixed forms receive the intended behavior.
+## 8. Validation plan and limitations
 
-## Validation plan
-
-- Unit-test handles, hashtags, ordinary airline names, multiword names, non-airline mentions, non-airline hashtags, punctuation, whitespace, and invalid input.
-- Review a random sample of actual before/after tweets and specifically inspect ambiguous names.
-- Keep raw text and processed text in separate columns.
-- Record this configuration with each experiment so results remain reproducible.
-- Compare clustering performance only after running the unsupervised pipeline; use labels only in the permitted evaluation stage.
-
-## Current limitation
-
-The implementation uses a curated alias list, not a complete airline entity recognizer. New spellings, misspellings, unusual hashtags, or aliases absent from the list will not necessarily be normalized. Alias expansion should be driven by data inspection and documented changes, not by looking at sentiment labels.
+- Unit-test exact airline names, handles, hashtags, sentiment suffixes, non-airline mentions, whitespace, and invalid input.
+- Inspect before/after samples from the actual dataset, especially ambiguous terms.
+- Continue to expand aliases and suffixes based on label-free frequency and manual text inspection.
+- This remains a curated alias/suffix method, not a general airline entity recognizer.
+- Any possible clustering benefit from this normalization must be evaluated later; it is a design hypothesis, not an established performance improvement.

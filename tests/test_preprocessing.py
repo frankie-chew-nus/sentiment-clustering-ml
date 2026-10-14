@@ -23,12 +23,24 @@ def test_airline_mentions_become_generic_token():
     assert replace_airline_mentions("@united delayed my flight") == "airline delayed my flight"
 
 
+def test_american_air_handle_is_recognized():
+    assert replace_airline_mentions("@AmericanAir delayed my flight") == "airline delayed my flight"
+
+
+def test_virgin_atlantic_handle_is_recognized():
+    assert replace_airline_mentions("@VirginAtlantic please help") == "airline please help"
+
+
 def test_non_airline_mentions_are_removed():
     assert remove_mentions("Hi @someone!") == "Hi !"
 
 
-def test_airline_hashtags_become_generic_token():
+def test_exact_airline_hashtags_become_generic_token():
     assert replace_airline_hashtags("#United #WorstFlightEver #DeltaAirlines") == "airline WorstFlightEver airline"
+
+
+def test_airline_sentiment_hashtag_suffix_is_preserved():
+    assert replace_airline_hashtags("#usairwaysfail #unitedsucks") == "airline fail airline sucks"
 
 
 def test_ordinary_airline_names_become_generic_token():
@@ -50,6 +62,10 @@ def test_non_airline_hashtags_keep_content():
 def test_full_group1_example():
     text = "@united United delayed my flight again! #United #WorstFlightEver"
     assert preprocess_text(text) == "airline airline delayed my flight again! airline WorstFlightEver"
+
+
+def test_full_group1_preserves_sentiment_suffix():
+    assert preprocess_text("@USAirways #usairwaysfail") == "airline airline fail"
 
 
 def test_normalize_whitespace():
