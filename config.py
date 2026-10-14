@@ -80,9 +80,9 @@ P1_CONFIG = {
     "emoji_mode": "describe",
 }
 
-# Group 3 controls remain independent. Segmentation and spelling correction
-# are OFF until their method/dictionary is validated; lemmatization and
-# stopword-removal ON/OFF effects will be measured rather than assumed.
+# P2 defaults reflect the completed Group 3 validation: selective hashtag
+# segmentation, lemmatization, and protected stopword removal are ON; global
+# segmentation and generic spelling correction remain OFF.
 P2_CONFIG = {
     **P1_CONFIG,
     # Global ordinary-text segmentation remains OFF. P2 selectively segments
@@ -94,8 +94,8 @@ P2_CONFIG = {
     "correct_spelling": False,
     "symspell_dictionary_path": None,
     "max_edit_distance": 2,
-    "lemmatize": False,
+    "lemmatize": True,
     "spacy_model": "en_core_web_sm",
-    "remove_stopwords": False,
+    "remove_stopwords": True,
     "preserve_negation": True,
 }
