@@ -1,18 +1,29 @@
-"""Configuration for Group 1 tweet cleaning."""
+"""Configuration for Group 1 tweet cleaning.
 
-# Match airline-specific hashtags only; normal airline words are preserved.
-# Extend aliases after reviewing the actual dataset's hashtag vocabulary.
-AIRLINE_HASHTAG_ALIASES = frozenset({
-    'united', 'unitedairlines', 'delta', 'deltaairlines',
-    'american', 'americanairlines', 'usairways', 'usair',
-    'southwest', 'southwestair', 'southwestairlines',
-    'jetblue', 'virginamerica', 'virgin',
+Airline aliases are replaced with the generic token "airline" whether they
+appear as @mentions, #hashtags, or ordinary text. Review aliases against the
+dataset because some names (such as "American") can also be ordinary words.
+"""
+
+AIRLINE_ALIASES = frozenset({
+    "united", "united airlines", "unitedairlines",
+    "delta", "delta air lines", "delta airlines", "deltaairlines",
+    "american", "american airlines", "americanairlines",
+    "us airways", "usairways", "usair",
+    "southwest", "southwest airlines", "southwestair", "southwestairlines",
+    "jetblue", "jet blue",
+    "virgin america", "virginamerica", "virgin",
 })
 
+# Backwards-compatible name while older code is being updated.
+AIRLINE_HASHTAG_ALIASES = AIRLINE_ALIASES
+
 P0_CONFIG = {
-    'remove_urls': True,
-    'remove_mentions': True,
-    'remove_airline_hashtags': True,
-    'strip_hashtag_symbols': True,
-    'normalize_whitespace': True,
+    "remove_urls": True,
+    "replace_airline_mentions": True,
+    "remove_other_mentions": True,
+    "replace_airline_hashtags": True,
+    "replace_airline_names": True,
+    "strip_hashtag_symbols": True,
+    "normalize_whitespace": True,
 }
