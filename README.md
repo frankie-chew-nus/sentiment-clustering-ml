@@ -4,21 +4,22 @@ Modular Python code for the unsupervised airline-tweet sentiment clustering proj
 
 ## Current status
 
-- **Group 1 preprocessing:** URL removal, mention removal, airline-hashtag removal, hashtag-symbol stripping, and whitespace normalization.
-- **Configuration:** `P0_CONFIG` in `config.py` enables the Group 1 operations by default.
-- **Tests:** `tests/test_preprocessing.py` covers core expected behavior.
+- **Group 1 preprocessing:** URL removal, airline-reference normalization, removal of unrelated mentions, hashtag handling, and whitespace normalization.
+- **Configuration:** `P0_CONFIG` in `config.py` enables Group 1 operations by default.
+- **Tests:** `tests/test_preprocessing.py` covers the expected behavior for the current Group 1 rules.
 
 ## Group 1 rules
 
-- Remove URLs and `@mentions`.
-- Remove hashtags that exactly match a configured airline alias, such as `#United`.
-- Preserve ordinary airline names in the text (for example, `United delayed my flight`).
-- For other hashtags, remove only `#` and retain the content (for example, `#WorstFlightEver` becomes `WorstFlightEver`).
+- Remove URLs.
+- Replace configured airline references with the generic token `airline`, whether they appear as an `@mention`, a `#hashtag`, or ordinary text. Examples: `@united` -> `airline`, `#United` -> `airline`, `United delayed my flight` -> `airline delayed my flight`.
+- Remove non-airline `@mentions`.
+- Preserve non-airline hashtag content while removing the `#` marker; for example, `#WorstFlightEver` -> `WorstFlightEver`.
 - Keep the original raw tweet in a separate column; do not overwrite it.
+- The alias list includes potentially ambiguous names such as `American` and `Virgin`; inspect replacements on real tweets before treating the pipeline as final.
 
 ## Run tests
 
-From the repository root, install pytest if needed and run:
+From the repository root, run:
 
     python -m pip install pytest
     python -m pytest -q
@@ -44,7 +45,7 @@ Import from the cloned directory:
 
 Expected output:
 
-    United delayed my flight again! WorstFlightEver
+    airline airline delayed my flight again! airline WorstFlightEver
 
 ## Development notes
 
