@@ -101,3 +101,32 @@ Group 2 adds independently configurable transforms after Group 1 cleaning. The s
 Contraction expansion is intentionally conservative for ambiguous forms such as "I'd" and "he's", which are not expanded by the custom mapping. Emoji descriptions may vary with the installed emoji package version. The pipeline requires `emoji` and `num2words` for P1's default describe/number settings; P0 does not call these optional imports.
 
 The order is Group 1 cleanup -> contraction expansion -> emoji handling -> number conversion -> lowercase -> punctuation mode -> whitespace normalization. Contraction expansion precedes punctuation processing so negation is preserved. Feature extraction remains based on raw text. These defaults are hypotheses for evaluation, not evidence that P1 is better than P0.
+
+
+## Group 3: Advanced lexical normalization (implementation and experiment plan)
+
+Group 3 provides independent switches for word segmentation, SymSpell spelling correction, spaCy lemmatization, and optional stopword removal.
+
+### Decisions and defaults
+
+- Word segmentation supports none, wordninja, symspell, and a conservative hybrid. Default is none because the preliminary benchmark found false splits with both Wordninja and SymSpellPy. SEG0 remains the baseline; other methods are experimental candidates.
+- SymSpell spelling correction is optional and OFF by default. It requires a frequency dictionary file supplied via symspell_dictionary_path, uses a limited edit distance, and protects common negation and sentiment/domain terms. Do not enable without specifying and reviewing the dictionary.
+- spaCy lemmatization is optional and OFF by default pending an ON/OFF ablation. It requires the en_core_web_sm model. Negation terms are protected by default.
+- Stopword removal is optional and OFF by default. When enabled, negation words are preserved by default.
+- Hybrid segmentation uses Wordninja candidate splits and wordfreq frequency checks as a heuristic. It is not guaranteed to detect all concatenations correctly.
+
+P2 is intentionally conservative initially: it exposes all Group 3 functions without silently applying unvalidated segmentation or spelling correction. After controlled experiments, choose an evidence-based configuration.
+
+### Dependency setup
+
+Install Python dependencies from requirements.txt and development dependencies from requirements-dev.txt. To use spaCy lemmatization or stopword removal in Colab, also download the English model:
+
+    python -m spacy download en_core_web_sm
+
+For SymSpell segmentation or spelling correction, select a word-frequency dictionary and pass its path in symspell_dictionary_path. Do not commit large dictionaries unless the licence and repository-size implications have been checked.
+
+### Execution order
+
+Group 1 -> contraction expansion -> emoji handling -> number conversion -> lowercasing -> punctuation handling -> segmentation -> spelling correction -> lemmatization -> optional stopword removal -> whitespace normalization.
+
+The original tweet remains unchanged, and engineered structural/VADER features must be computed from raw text. These settings are experimental candidates, not evidence of better clustering.

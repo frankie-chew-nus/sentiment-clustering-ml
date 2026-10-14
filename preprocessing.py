@@ -25,6 +25,13 @@ from config import (
     P1_CONFIG,
 )
 
+from lexical_normalization import (
+    correct_spelling,
+    lemmatize_text,
+    remove_stopwords,
+    split_compound_words,
+)
+
 _URL_RE = re.compile(r"(?i)\b(?:https?://|www\.)[^\s<>]+")
 _MENTION_RE = re.compile(r"(?<!\w)@([A-Za-z0-9_]+)")
 _HASHTAG_RE = re.compile(r"(?<!\w)#([A-Za-z0-9_]+)")
@@ -291,6 +298,38 @@ def preprocess_text(text: str, config: Mapping[str, Any] | None = None) -> str:
         raise ValueError("punctuation_mode must be 'remove' or 'keep'")
     if punctuation_mode == "remove":
         text = remove_punctuation(text)
+
+    # Group 3: optional lexical normalization. Each operation is controlled
+    # independently so its contribution can be measured in ablation studies.
+    text = split_compound_words(
+        text,
+        method=str(settings.get("segmentation_mode", "none")),
+        min_token_length=int(settings.get("segmentation_min_token_length", 7)),
+        protected_words=settings.get("protected_words", ()),
+        symspell_dictionary_path=settings.get("symspell_dictionary_path"),
+    )
+
+    if settings.get("correct_spelling", False):
+        text = correct_spelling(
+            text,
+            dictionary_path=settings.get("symspell_dictionary_path"),
+            max_edit_distance=int(settings.get("max_edit_distance", 2)),
+            protected_words=settings.get("protected_words", ()),
+        )
+
+    if settings.get("lemmatize", False):
+        text = lemmatize_text(
+            text,
+            model=str(settings.get("spacy_model", "en_core_web_sm")),
+            preserve_negation=bool(settings.get("preserve_negation", True)),
+        )
+
+    if settings.get("remove_stopwords", False):
+        text = remove_stopwords(
+            text,
+            model=str(settings.get("spacy_model", "en_core_web_sm")),
+            preserve_negation=bool(settings.get("preserve_negation", True)),
+        )
 
     if settings.get("normalize_whitespace", False):
         text = normalize_whitespace(text)

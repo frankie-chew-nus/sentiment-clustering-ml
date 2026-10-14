@@ -2,7 +2,7 @@
 
 import pytest
 
-from config import P0_CONFIG, P1_CONFIG
+from config import P0_CONFIG, P1_CONFIG, P2_CONFIG
 from preprocessing import (
     convert_numbers,
     expand_contractions,
@@ -17,6 +17,10 @@ from preprocessing import (
     replace_airline_mentions,
     replace_airline_names,
     strip_hashtag_symbols,
+    split_compound_words,
+    correct_spelling,
+    lemmatize_text,
+    remove_stopwords,
 )
 
 
@@ -149,6 +153,49 @@ def test_punctuation_mode_validation():
 def test_emoji_mode_validation():
     with pytest.raises(ValueError):
         handle_emojis("test", mode="invalid")
+
+
+
+def test_segmentation_none_is_identity():
+    assert split_compound_words("greatjob worstflightever", method="none") == "greatjob worstflightever"
+
+
+def test_segmentation_rejects_unknown_method():
+    with pytest.raises(ValueError):
+        split_compound_words("greatjob", method="unknown")
+
+
+def test_wordninja_segmentation():
+    result = split_compound_words("greatjob worstflightever", method="wordninja", min_token_length=7)
+    assert "great job" in result
+    assert "worst flight ever" in result
+
+
+def test_symspell_segmentation_requires_dictionary():
+    with pytest.raises(ValueError, match="symspell_dictionary_path"):
+        split_compound_words("greatjob", method="symspell", symspell_dictionary_path=None)
+
+
+def test_spelling_correction_requires_dictionary():
+    with pytest.raises(ValueError, match="symspell_dictionary_path"):
+        correct_spelling("terribl", dictionary_path=None)
+
+
+def test_spacy_missing_model_has_actionable_error():
+    with pytest.raises(OSError, match="spaCy model"):
+        lemmatize_text("delayed flights", model="model_that_does_not_exist")
+
+
+def test_stopword_removal_requires_spacy_model():
+    with pytest.raises(OSError, match="spaCy model"):
+        remove_stopwords("this is not good", model="model_that_does_not_exist", preserve_negation=True)
+
+
+def test_p2_is_conservative_by_default():
+    assert P2_CONFIG["segmentation_mode"] == "none"
+    assert P2_CONFIG["correct_spelling"] is False
+    assert P2_CONFIG["lemmatize"] is False
+    assert P2_CONFIG["remove_stopwords"] is False
 
 
 def test_strip_hashtag_symbols_standalone():

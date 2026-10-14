@@ -4,21 +4,29 @@ Modular Python code for unsupervised clustering of airline tweets by sentiment.
 
 ## Current status
 
-- **Group 1:** URL removal, generic airline placeholder, other mention removal, hashtag handling, and whitespace normalization.
-- **Group 2:** configurable contraction expansion, number conversion, lowercasing, punctuation mode, and emoji mode.
-- **Configuration:** `P0_CONFIG` is basic cleaning; `P1_CONFIG` enables the standard normalization settings.
-- **Decision history:** See `docs/preprocessing_decisions.md` for Group 1 rationale and dataset-derived alias findings.
+- Group 1: basic cleaning and generic airline-placeholder normalization.
+- Group 2: configurable contraction expansion, number conversion, lowercasing, punctuation handling, and emoji modes.
+- Group 3: optional segmentation, spelling correction, spaCy lemmatization, and negation-protected stopword removal.
+- Configurations: P0 (Group 1), P1 (Groups 1-2), and P2 (Groups 1-3 options).
+- Decision history: docs/preprocessing_decisions.md.
 
-## Group 2 defaults
+## Group 3 defaults
 
-P1 defaults to contraction expansion ON, number conversion ON, lowercasing ON, punctuation removal, and emoji description mode. The emoji mode is configurable as `describe`, `keep`, or `remove`; punctuation mode is `remove` or `keep`.
+Group 3 operations are exposed but conservative by default:
+- segmentation: none while methods are being benchmarked;
+- spelling correction: OFF until a frequency dictionary is selected and reviewed;
+- lemmatization: OFF pending ON/OFF ablation;
+- stopword removal: OFF, with negation preservation available.
 
-These are starting settings, not experimentally established best choices. P0 remains available as Group 1-only cleaning for controlled comparison. P2 will be configured when Group 3 is implemented.
+Segmentation can be set to wordninja, symspell, or hybrid. These are candidate methods, not presumed improvements.
 
 ## Install dependencies
 
     python -m pip install -r requirements.txt
     python -m pip install -r requirements-dev.txt
+    python -m spacy download en_core_web_sm
+
+The spaCy model is required only if lemmatization or stopword removal is enabled. SymSpell also needs a compatible frequency dictionary passed as symspell_dictionary_path.
 
 ## Run tests
 
@@ -31,12 +39,16 @@ These are starting settings, not experimentally established best choices. P0 rem
     import sys
     sys.path.insert(0, "/content/sentiment-clustering-ml")
     from preprocessing import preprocess_text
-    from config import P0_CONFIG, P1_CONFIG
+    from config import P0_CONFIG, P1_CONFIG, P2_CONFIG
 
     raw = "@united I can't wait 3 hours!!! 😡 #unitedsucks"
     print(preprocess_text(raw, P0_CONFIG))
     print(preprocess_text(raw, P1_CONFIG))
 
+    # Enable a segmentation candidate only for its ablation:
+    test_config = {**P1_CONFIG, "segmentation_mode": "wordninja"}
+    print(preprocess_text("greatjob worstflightever", test_config))
+
 ## Methodological rule
 
-Keep the original tweet in a separate column. VADER, uppercase ratio, emoji counts, and punctuation counts must be extracted from the original text rather than normalized output. Sentiment labels/confidence must not be used for preprocessing or clustering; they are reserved for post-clustering evaluation.
+Keep the raw tweet in a separate column. Structural features and VADER scores must be extracted from original raw text. Sentiment labels/confidence are for post-clustering evaluation only.
