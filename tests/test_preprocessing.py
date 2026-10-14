@@ -56,6 +56,10 @@ def test_ordinary_airline_names_become_generic_token():
     assert replace_airline_names("United delayed my flight") == "airline delayed my flight"
 
 
+def test_explicit_american_airlines_name_becomes_generic_token():
+    assert replace_airline_names("American Airlines cancelled my flight") == "airline cancelled my flight"
+
+
 def test_multiword_airline_names_become_generic_token():
     assert replace_airline_names("Delta Air Lines and Virgin America") == "airline and airline"
 

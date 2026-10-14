@@ -130,3 +130,15 @@ For SymSpell segmentation or spelling correction, select a word-frequency dictio
 Group 1 -> contraction expansion -> emoji handling -> number conversion -> lowercasing -> punctuation handling -> segmentation -> spelling correction -> lemmatization -> optional stopword removal -> whitespace normalization.
 
 The original tweet remains unchanged, and engineered structural/VADER features must be computed from raw text. These settings are experimental candidates, not evidence of better clustering.
+
+## Group 1 alias ambiguity trade-off clarified
+
+The team chose to keep the current simple alias-list approach rather than introduce separate context-aware alias systems for handles, hashtags, brands, and locations. The accepted trade-off is that standalone aliases such as "American" or "Virgin" may occasionally be replaced in ordinary-English contexts even when they do not refer to an airline. We will inspect examples and accept this risk for now rather than add more complex entity disambiguation.
+
+Explicit airline names must still be normalized. In particular:
+
+- "American Airlines cancelled my flight" -> "airline cancelled my flight"
+- "Virgin America has amazing service" -> "airline has amazing service"
+
+The alias pattern matches whole words/phrases and orders longer aliases before shorter aliases, so the explicit phrase "American Airlines" is treated as a single airline name. This is covered by a regression test. The false-positive risk for standalone words is documented as an accepted limitation, not an intended semantic distinction.
+
