@@ -137,3 +137,28 @@ The executed Colab assertion comparing row count and three coverage counts with 
 **Interpretation:** The implemented N features reproduce audited corpus-level counts and pass the reported unit/regression checks. This validates extraction consistency, **not** sentiment-clustering improvement, nor the superiority of N2 versus N3.
 
 **Remaining validation before PR:** Export/review the feature-only N CSV schema, sequential row identifiers, value ranges, and absence of sentiment labels/confidence; document any anomalies. Keep notebooks and datasets outside GitHub. User reviews PR and supplies any additional evidence before merging.
+
+## L3-N-VAL-02 — Final N feature CSV validation (2026-10-15)
+
+**Evidence:** User-provided `Tweets-L3-negation-intensity-features.csv`, reviewed after user-run N0/N0-B corpus parity and 23/23 N tests, 93/93 full regression tests.
+
+| Check | Observed |
+|---|---|
+| Rows | 14,639 |
+| Sequential `row_id` | 0–14,638 |
+| Feature columns | `N_negation_count`, `N_intensifier_original_count`, `N_intensifier_conservative_count` |
+| Tweets with negation count > 0 | 4,916 |
+| Tweets with original intensifier count > 0 | 1,823 |
+| Tweets with conservative intensifier count > 0 | 693 |
+| Total negation matches / max per tweet | 5,961 / 4 |
+| Total original intensifier matches / max | 1,993 / 4 |
+| Total conservative intensifier matches / max | 722 / 3 |
+| All three counts zero | 8,580 |
+| Invalid, missing, or negative feature counts | 0 |
+| Sentiment labels/confidence columns | None |
+
+**Interpretation:** Schema, row sequence, nonnegative integer counts, subset relation (conservative <= original), and corpus-level audit counts are consistent with the approved extractor. The previously reported P1 SHA256 was `fdeab9faa57b7ffb7ac33335aebafc5f153849d94647e0118d02e809a86c632e`.
+
+**Limitations:** The CSV alone does not authenticate the full extraction history or prove sentiment-clustering benefit. N1, N2, and N3 remain controlled alternatives; neither intensifier vocabulary has been selected using ground-truth labels.
+
+**Disposition:** Candidate implementation and evidence ready for user PR review. User supplies/reviews supporting evidence and performs the merge. No notebooks, slide decks, or CSV datasets committed to GitHub.
