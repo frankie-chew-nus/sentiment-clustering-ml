@@ -365,3 +365,11 @@ Manual stopword checks showed the intended protected behavior: `the flight was d
 
 Final P2 Group 3 defaults are therefore: selective Wordninja segmentation for non-airline hashtag bodies ON; global ordinary-text segmentation OFF; generic SymSpell spelling correction OFF; lemmatization ON; stopword removal ON; negation protection ON. Stopword removal uses the configured protection sets for negation, sentiment/domain terms, and intensifiers. These preprocessing choices remain hypotheses whose downstream value will be tested by the clustering experiments; functional validation does not by itself establish improved clustering quality.
 
+
+## P0 update: decode HTML entities before URL removal
+
+Raw tweet inspection identified HTML character references such as `&amp;`, which represent encoded text rather than intended linguistic content. P0 now uses Python's built-in `html.unescape()` to decode HTML character references before other cleaning. No additional dependency is required.
+
+The operation runs **before URL removal**. This restores the serialized text first (for example, `&amp;` -> `&`, `&gt;` -> `>`), after which URL removal and the remaining P0 rules operate on the decoded representation. If an HTML entity occurs inside a URL, decoding it first is harmless because the subsequent URL-removal step removes the URL as a whole.
+
+This is treated as low-level text restoration rather than lexical normalization: it does not intentionally infer sentiment or rewrite vocabulary. The setting is configurable through `decode_html_entities` and is enabled in P0, therefore inherited by P1 and P2. As with the rest of the pipeline, the original raw text remains retained separately.
