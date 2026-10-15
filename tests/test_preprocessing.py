@@ -5,6 +5,7 @@ import pytest
 from config import P0_CONFIG, P1_CONFIG, P2_CONFIG
 from preprocessing import (
     convert_numbers,
+    decode_html_entities,
     expand_contractions,
     handle_emojis,
     lowercase_text,
@@ -22,6 +23,20 @@ from preprocessing import (
     lemmatize_text,
     remove_stopwords,
 )
+
+
+def test_decode_html_entities():
+    assert decode_html_entities("Delayed &amp; nobody helped &gt; 2 hours") == "Delayed & nobody helped > 2 hours"
+
+
+def test_p0_decodes_html_entities_before_other_cleaning():
+    result = preprocess_text("@united delayed &amp; nobody helped", P0_CONFIG)
+    assert result == "airline delayed & nobody helped"
+
+
+def test_html_entity_inside_url_is_decoded_then_url_removed():
+    result = preprocess_text("See https://example.com?a=1&amp;b=2 now", P0_CONFIG)
+    assert result == "See now"
 
 
 def test_remove_urls_preserves_sentence_punctuation():

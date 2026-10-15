@@ -14,6 +14,7 @@ Group 2:
 """
 from __future__ import annotations
 
+import html
 import re
 import unicodedata
 from typing import Any, Collection, Mapping
@@ -115,6 +116,11 @@ def _alias_pattern(aliases: Collection[str]) -> re.Pattern[str]:
         r"(?<![\w@#])(?:" + "|".join(alternatives) + r")(?!\w)",
         re.IGNORECASE,
     )
+
+
+def decode_html_entities(text: str) -> str:
+    """Decode HTML character references before other text cleanup."""
+    return html.unescape(text)
 
 
 def remove_urls(text: str) -> str:
@@ -273,7 +279,9 @@ def remove_punctuation(text: str) -> str:
 
 
 # Group 1 cleaning, in dependency-safe order.
+# HTML entities are decoded first so later operations see the restored text.
 _GROUP1_STEPS = (
+    ("decode_html_entities", decode_html_entities),
     ("remove_urls", remove_urls),
     ("replace_airline_mentions", replace_airline_mentions),
     ("remove_other_mentions", remove_mentions),
