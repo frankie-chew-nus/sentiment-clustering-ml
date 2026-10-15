@@ -109,3 +109,77 @@ def load_p1_text_only(path: str | Path):
     if df["processed_text"].isna().any():
         raise ValueError("P1 processed_text contains nulls; resolve before extraction")
     return df["processed_text"].tolist()
+
+# L3-S: boundary-aware URL exclusion for structural features only.
+from feature_engineering_config import S_COLUMNS, select_s_columns
+
+_S_URL_RE = _re.compile(
+    r"(?i)(?<![\w@])(?:https?://|www\.)[^\s<>\"']+"
+    r"|(?<![\w@])(?:[a-z0-9-]+\.)+(?:com|org|net|edu|gov|co|io|ly|me|info|biz|us|uk|sg)(?:/[^\s<>\"']*)?"
+)
+_S_URL_TRAILING_PUNCT = ".,!?;:)]}"
+_S_URL_STOP_CHARS = frozenset('“”‘’«»‹›<>')
+
+def _s_emoji_list(text: str):
+    """Use emoji package sequence matching, as in S0-C audit."""
+    import emoji
+    return emoji.emoji_list(text)
+
+def strip_s_urls(raw_text: str) -> str:
+    """S0-C audit rule: remove URL spans but preserve adjacent emoji/punctuation."""
+    if not isinstance(raw_text, str):
+        raise TypeError("raw_text must be a string")
+    spans = [(e["match_start"], e["match_end"]) for e in _s_emoji_list(raw_text)]
+    edits = []
+    for match in _S_URL_RE.finditer(raw_text):
+        start, end = match.span()
+        for emoji_start, _ in spans:
+            if start < emoji_start < end:
+                end = min(end, emoji_start)
+                break
+        for i in range(start, end):
+            if raw_text[i] in _S_URL_STOP_CHARS:
+                end = i
+                break
+        while end > start and raw_text[end - 1] in _S_URL_TRAILING_PUNCT:
+            end -= 1
+        if end > start:
+            edits.append((start, end))
+    for start, end in reversed(edits):
+        raw_text = raw_text[:start] + raw_text[end:]
+    return raw_text
+
+def extract_s_scores(raw_text: str) -> dict[str, float | int]:
+    """Extract structural expression from temporary URL-excluded RAW text."""
+    cleaned = strip_s_urls(raw_text)
+    eligible = [
+        token for token in _re.findall(r"\b[^\W\d_]+\b", cleaned, flags=_re.UNICODE)
+        if len(token) >= 2 and token.isalpha()
+    ]
+    uppercase_ratio = (
+        sum(token.isupper() for token in eligible) / len(eligible) if eligible else 0.0
+    )
+    return {
+        "S_exclamation_count": cleaned.count("!"),
+        "S_uppercase_ratio": uppercase_ratio,
+        "S_emoji_count": len(_s_emoji_list(cleaned)),
+    }
+
+def extract_s_frame(raw_texts: Sequence[str]):
+    """Return row-aligned S feature block; no labels or confidence fields."""
+    import pandas as pd
+    if isinstance(raw_texts, (str, bytes)):
+        raise TypeError("raw_texts must be a sequence, not a string")
+    rows = [{"row_id": i, **extract_s_scores(t)} for i, t in enumerate(raw_texts)]
+    return pd.DataFrame.from_records(rows, columns=["row_id", *S_COLUMNS]).astype(
+        {"row_id": "int64", "S_exclamation_count": "int64",
+         "S_uppercase_ratio": "float64", "S_emoji_count": "int64"}
+    )
+
+def select_s_frame(master, variant: str):
+    """Select S0-S3; row_id is alignment metadata, never a model feature."""
+    columns = select_s_columns(variant)
+    missing = [c for c in columns if c not in master.columns]
+    if missing:
+        raise ValueError(f"Missing S columns: {missing}")
+    return master.loc[:, list(columns)].copy()

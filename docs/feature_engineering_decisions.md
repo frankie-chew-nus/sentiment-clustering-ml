@@ -162,3 +162,79 @@ The executed Colab assertion comparing row count and three coverage counts with 
 **Limitations:** The CSV alone does not authenticate the full extraction history or prove sentiment-clustering benefit. N1, N2, and N3 remain controlled alternatives; neither intensifier vocabulary has been selected using ground-truth labels.
 
 **Disposition:** Candidate implementation and evidence ready for user PR review. User supplies/reviews supporting evidence and performs the merge. No notebooks, slide decks, or CSV datasets committed to GitHub.
+
+## L3-S0 / S0-B / S0-C — Structural expression audit and implementation (2026-10-15)
+
+**Status:** Candidate S0–S3 implementation committed to feature branch; Colab unit tests, full regression and corpus parity are **pending**. No PR or merge yet.
+
+**Objective and leakage control:** Capture sentiment expression (not sentiment polarity or topic) using original RAW tweets, with a temporary URL-excluded view. Do not use airline_sentiment or confidence columns. RAW, P0/P1/P2 and existing V/N feature definitions are unchanged.
+
+**S0 label-blind audit:** 14,639 RAW tweets; exclamation marks in 3,226 (22.04%), uppercase emphasis in 4,256 (29.07%), emojis in 492 (3.36%). Exclamation mean 0.363, median 0, p95 2, max 27; emoji mean 0.0676, median 0, p95 0, max 40. Spearman correlations: exclamation–uppercase 0.0514, exclamation–emoji 0.0497, uppercase–emoji 0.0065. These are expression indicators, not positive/negative labels.
+
+**S0-B URL sensitivity:** 1,175 tweets (8.03%) contained matched URLs; 388 tweets (2.65%) changed at least one S feature. Exclamation changes 0; uppercase-ratio changes 386; emoji changes 3. S0-B sometimes consumed emojis directly adjacent to URLs.
+
+**S0-C boundary correction:** Revised URL matching preserves adjacent emoji sequences and terminal punctuation. All 14,639 tweets retained their original emoji sequences (0 losses), exclamation changes remained 0; compared with S0-B, uppercase changed in 2 tweets and emoji count in 3. Means (RAW / S0-B / S0-C): exclamation 0.362866 / 0.362866 / 0.362866; uppercase 0.028206 / 0.028815 / 0.028830; emoji 0.067559 / 0.067218 / 0.067559. The S0 initial audit and later audits used slightly different uppercase tokenization rules; **do not interpret cross-audit uppercase means as pure URL effects**.
+
+**Agreed candidate feature definitions:**
+- `S_exclamation_count`: number of literal `!` characters in temporary URL-excluded RAW text.
+- `S_uppercase_ratio`: count of eligible alphabetic tokens (at least 2 letters) that are entirely uppercase, divided by eligible-token count; 0 if none. Uses the S0-C Unicode-aware regex definition.
+- `S_emoji_count`: count of emoji sequences via `emoji.emoji_list` after temporary URL exclusion.
+- S0 none; S1 exclamation; S2 exclamation + uppercase; S3 all three. Raw counts/ratios retained unscaled in feature CSV; scaling is deferred to the clustering pipeline.
+
+**Limitations:** URL boundaries are heuristic; uppercase acronyms, airport codes, handles and hashtags may still contribute noise. Emoji count is sparse. VADER also reacts to punctuation, case and emoji; marginal clustering value must be tested later. No handcrafted polarity thresholds.
+
+**Evidence storage:** S0, S0-B, S0-C audit ZIPs and permanent team PowerPoint are held outside GitHub; no notebooks, datasets, slides or large outputs are committed.
+
+**Verification gate:** Run `tests/test_s_features.py`, then `python -m pytest -q` for full regression; verify RAW SHA256 `a41aeefcff9740c090153f608691d345c84f59084e40f03169c2f667df66578e`, 14,639 rows, S0-C corpus means and emoji preservation. Export and review feature-only CSV before opening PR. User adds evidence and merges only after review.
+
+## L3-S-VAL-01 — Colab test and full-corpus parity evidence (2026-10-15)
+
+**Evidence source:** User-reported Colab outputs from the S feature branch; results were not independently rerun by this documentation update.
+
+- S-specific automated tests: **19 passed**.
+- Full project regression suite: **112 passed**.
+- RAW source: `Tweets-redacted.csv`, SHA256 `a41aeefcff9740c090153f608691d345c84f59084e40f03169c2f667df66578e`, 1,561,768 bytes.
+- Rows: **14,639**; `row_id` 0–14,638.
+- Output columns: `row_id`, `S_exclamation_count`, `S_uppercase_ratio`, `S_emoji_count`.
+
+| Statistic | Exclamation count | Uppercase ratio | Emoji count |
+|---|---:|---:|---:|
+| Mean | 0.3628663160051916 | 0.028830265685066452 | 0.06755925951226177 |
+| Standard deviation | 0.919735 | 0.076977 | 0.617202 |
+| Minimum | 0 | 0 | 0 |
+| 25th percentile | 0 | 0 | 0 |
+| Median | 0 | 0 | 0 |
+| 75th percentile | 0 | 0.041667 | 0 |
+| Maximum | 27 | 0.956522 | 40 |
+
+Tweets with `S_emoji_count > 0`: **492**.
+
+**Assessment:** Feature means and emoji prevalence match S0-C audit values to displayed precision. The RAW source fingerprint matches the earlier audit. The reported 19/19 and 112/112 tests passed. These establish extraction and regression consistency, not a sentiment-clustering benefit.
+
+**Next verification:** Export and review feature-only CSV for schema, nonnegative counts, valid ratios, sequential row IDs, and absence of sentiment labels/confidence; capture any anomalies before PR. No notebook or CSV committed.
+
+## L3-S-VAL-02 — Final feature-only CSV review (2026-10-15)
+
+**Evidence source:** User-uploaded `Tweets-L3-structural-features.csv`, reviewed independently for structural and numerical validity after user-run Colab tests.
+
+| Check | Observed |
+|---|---|
+| Rows | 14,639 |
+| Sequential `row_id` | 0–14,638 |
+| Feature columns | `S_exclamation_count`, `S_uppercase_ratio`, `S_emoji_count` |
+| Tweets with exclamation count > 0 | 3,226 |
+| Tweets with uppercase ratio > 0 | 3,917 |
+| Tweets with emoji count > 0 | 492 |
+| Exclamation mean / max | 0.3628663160051916 / 27 |
+| Uppercase ratio mean / max | 0.028830265685066452 / 0.9565217391304348 |
+| Emoji mean / max | 0.06755925951226177 / 40 |
+| Missing/non-finite/negative feature values | 0 |
+| Noninteger exclamation or emoji counts | 0 |
+| Uppercase ratio outside [0,1] | 0 |
+| Ground-truth sentiment or confidence columns | None |
+
+**Audit consistency:** Feature means and emoji prevalence match S0-C; exclamation prevalence matches 3,226 tweets. The finalized S0-C uppercase definition yields 3,917 nonzero ratios, not the initial S0 audit's 4,256 (different tokenization rules). Do not compare these as if definitions were identical.
+
+**Other evidence:** User reported S-specific tests 19/19 and full suite 112/112 passed; RAW SHA256 `a41aeefcff9740c090153f608691d345c84f59084e40f03169c2f667df66578e` matched earlier audit.
+
+**Disposition:** Candidate implementation and CSV checks complete; ready for user PR review. CSV alone does not prove every row's provenance or improved sentiment clustering. No notebook, CSV or slides are committed to GitHub.
