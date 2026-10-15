@@ -61,3 +61,51 @@ def load_raw_text_only(path: str | Path):
     if raw["text"].isna().any():
         raise ValueError("RAW text contains null values; resolve before extraction")
     return raw["text"].tolist()
+
+# L3-N: P1 lexical modifier features. Keep preprocessing functions unchanged.
+import re as _re
+from config import NEGATION_WORDS, INTENSIFIER_WORDS
+from feature_engineering_config import (
+    CONSERVATIVE_INTENSIFIER_WORDS, N_COLUMNS, select_n_columns,
+)
+
+_N_TOKEN_RE = _re.compile(r"[a-z]+(?:'[a-z]+)?", flags=_re.IGNORECASE)
+
+def extract_n_scores(p1_text: str) -> dict[str, int]:
+    """Count exact P1 tokens; never infer sentiment polarity or use labels."""
+    if not isinstance(p1_text, str):
+        raise TypeError("p1_text must be a string; nulls must be resolved explicitly")
+    tokens = _N_TOKEN_RE.findall(p1_text.casefold())
+    return {
+        "N_negation_count": sum(t in NEGATION_WORDS for t in tokens),
+        "N_intensifier_original_count": sum(t in INTENSIFIER_WORDS for t in tokens),
+        "N_intensifier_conservative_count": sum(
+            t in CONSERVATIVE_INTENSIFIER_WORDS for t in tokens
+        ),
+    }
+
+def extract_n_frame(p1_texts: Sequence[str]):
+    """Preserve P1 row order and create a feature-only N block."""
+    import pandas as pd
+    if isinstance(p1_texts, (str, bytes)):
+        raise TypeError("p1_texts must be a sequence, not a string")
+    rows = [{"row_id": i, **extract_n_scores(t)} for i, t in enumerate(p1_texts)]
+    return pd.DataFrame.from_records(rows, columns=["row_id", *N_COLUMNS]).astype(
+        {"row_id": "int64", **{c: "int64" for c in N_COLUMNS}}
+    )
+
+def select_n_frame(master, variant: str):
+    """Select N0-N3; do not expose row_id as a clustering feature."""
+    columns = select_n_columns(variant)
+    missing = [c for c in columns if c not in master.columns]
+    if missing:
+        raise ValueError(f"Missing N columns: {missing}")
+    return master.loc[:, list(columns)].copy()
+
+def load_p1_text_only(path: str | Path):
+    """Read only P1 processed_text, never ground-truth sentiment columns."""
+    import pandas as pd
+    df = pd.read_csv(path, usecols=["processed_text"], dtype={"processed_text": "string"})
+    if df["processed_text"].isna().any():
+        raise ValueError("P1 processed_text contains nulls; resolve before extraction")
+    return df["processed_text"].tolist()
