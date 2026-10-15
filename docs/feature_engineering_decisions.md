@@ -51,3 +51,37 @@ Status: **implementation candidate; Colab validation pending; not approved for m
 **User-reported verification:** Full regression suite **70 passed** after setup. This is user-reported console output, not independently reproduced by this document update. The VADER implementation and preprocessing source were not modified for ENV-01.
 
 **Decision:** Treat ENV-01 as an environment/setup issue; retain existing P0/P1/P2 code. Full-dataset VADER extraction and V0 audit parity checks remain the next validation gate before merge.
+
+## L3-VADER-VAL-01 — Full-dataset feature CSV review (2026-10-15)
+
+**Evidence source:** User-provided `Tweets-L3-vader-features.csv`, reviewed against the previously executed label-blind V0 audit. This CSV is an output artifact retained outside GitHub, not a repository input or a source of ground-truth sentiment.
+
+**Reported CSV validation results:**
+
+| Check | Observed | Assessment |
+|---|---:|---|
+| Rows | 14,639 | Matches V0 audit |
+| Sequential `row_id` | 0–14,638 | Expected order/shape |
+| Engineered columns | `V_pos`, `V_neg`, `V_neu`, `V_compound` | Expected feature-only schema |
+| Exact zero compound | 2,323 | Matches V0 audit |
+| Both positive and negative components zero | 2,269 | Matches V0 audit |
+| Unique compound scores | 2,915 | Matches V0 audit |
+| Invalid/non-finite score values | 0 | Passed |
+| Sentiment-label or confidence columns | None | Passed |
+
+**Score summary (rounded to four decimals):**
+
+| Feature | Mean | Min | Max |
+|---|---:|---:|---:|
+| `V_pos` | 0.1569 | 0.0000 | 1.0000 |
+| `V_neg` | 0.0817 | 0.0000 | 0.7840 |
+| `V_neu` | 0.7615 | 0.0000 | 1.0000 |
+| `V_compound` | 0.1352 | -0.9574 | 0.9778 |
+
+**Interpretation:** Structural and numerical parity supports the VADER extraction implementation and retaining the configurable V0/V1/V2 variants. These are extraction-validity checks, not evidence that one variant produces better sentiment clusters.
+
+**Important qualification:** A standalone output CSV does not authenticate which RAW file or row order produced it. The V0 RAW source SHA256 was `a41aeefcff9740c090153f608691d345c84f59084e40f03169c2f667df66578e`; source-to-output provenance must be confirmed from the executed validation notebook or recorded export metadata before final sign-off. The VADER component-sum check should also allow all-zero scores for empty RAW text.
+
+**Testing evidence:** User reported targeted VADER tests **16/16 passed** and full regression suite **70/70 passed** after dependency installation. No preprocessing changes were required.
+
+**Decision / status:** Feature CSV numerical review accepted; **merge remains subject to source-provenance confirmation and user review**. Keep `V_neu` in the master feature CSV but exclude it from initial V1/V2 clustering selections. Do not commit notebooks or CSV datasets to GitHub without explicit user approval.
