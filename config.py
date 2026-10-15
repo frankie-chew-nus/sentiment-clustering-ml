@@ -60,6 +60,7 @@ STOPWORD_PROTECTED_WORDS = (
 )
 
 P0_CONFIG = {
+    "decode_html_entities": True,
     "remove_urls": True,
     "replace_airline_mentions": True,
     "remove_other_mentions": True,
