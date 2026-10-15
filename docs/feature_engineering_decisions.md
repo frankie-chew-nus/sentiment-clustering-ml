@@ -212,3 +212,29 @@ Tweets with `S_emoji_count > 0`: **492**.
 **Assessment:** Feature means and emoji prevalence match S0-C audit values to displayed precision. The RAW source fingerprint matches the earlier audit. The reported 19/19 and 112/112 tests passed. These establish extraction and regression consistency, not a sentiment-clustering benefit.
 
 **Next verification:** Export and review feature-only CSV for schema, nonnegative counts, valid ratios, sequential row IDs, and absence of sentiment labels/confidence; capture any anomalies before PR. No notebook or CSV committed.
+
+## L3-S-VAL-02 — Final feature-only CSV review (2026-10-15)
+
+**Evidence source:** User-uploaded `Tweets-L3-structural-features.csv`, reviewed independently for structural and numerical validity after user-run Colab tests.
+
+| Check | Observed |
+|---|---|
+| Rows | 14,639 |
+| Sequential `row_id` | 0–14,638 |
+| Feature columns | `S_exclamation_count`, `S_uppercase_ratio`, `S_emoji_count` |
+| Tweets with exclamation count > 0 | 3,226 |
+| Tweets with uppercase ratio > 0 | 3,917 |
+| Tweets with emoji count > 0 | 492 |
+| Exclamation mean / max | 0.3628663160051916 / 27 |
+| Uppercase ratio mean / max | 0.028830265685066452 / 0.9565217391304348 |
+| Emoji mean / max | 0.06755925951226177 / 40 |
+| Missing/non-finite/negative feature values | 0 |
+| Noninteger exclamation or emoji counts | 0 |
+| Uppercase ratio outside [0,1] | 0 |
+| Ground-truth sentiment or confidence columns | None |
+
+**Audit consistency:** Feature means and emoji prevalence match S0-C; exclamation prevalence matches 3,226 tweets. The finalized S0-C uppercase definition yields 3,917 nonzero ratios, not the initial S0 audit's 4,256 (different tokenization rules). Do not compare these as if definitions were identical.
+
+**Other evidence:** User reported S-specific tests 19/19 and full suite 112/112 passed; RAW SHA256 `a41aeefcff9740c090153f608691d345c84f59084e40f03169c2f667df66578e` matched earlier audit.
+
+**Disposition:** Candidate implementation and CSV checks complete; ready for user PR review. CSV alone does not prove every row's provenance or improved sentiment clustering. No notebook, CSV or slides are committed to GitHub.
