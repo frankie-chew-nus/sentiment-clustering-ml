@@ -35,3 +35,18 @@ def select_n_columns(variant: str) -> tuple[str, ...]:
     if variant not in N_FEATURE_SETS:
         raise ValueError(f"Unknown N variant {variant!r}; expected N0, N1, N2 or N3")
     return N_FEATURE_SETS[variant]
+
+# L3-S: structural expression from temporary URL-excluded RAW text.
+S_COLUMNS = ("S_exclamation_count", "S_uppercase_ratio", "S_emoji_count")
+S_FEATURE_SETS = MappingProxyType({
+    "S0": (),
+    "S1": ("S_exclamation_count",),
+    "S2": ("S_exclamation_count", "S_uppercase_ratio"),
+    "S3": S_COLUMNS,
+})
+
+def select_s_columns(variant: str) -> tuple[str, ...]:
+    """Explicit structural-feature whitelist; never infer numeric columns."""
+    if variant not in S_FEATURE_SETS:
+        raise ValueError(f"Unknown S variant {variant!r}; expected S0, S1, S2 or S3")
+    return S_FEATURE_SETS[variant]
