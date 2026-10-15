@@ -27,7 +27,12 @@ def test_exact_library_scores(text):
                       "V_neu": expected["neu"], "V_compound": expected["compound"]}
     assert -1 <= actual["V_compound"] <= 1
     assert all(0 <= actual[k] <= 1 for k in ("V_pos", "V_neg", "V_neu"))
-    assert abs(sum(actual[k] for k in ("V_pos", "V_neg", "V_neu")) - 1) <= .0011
+    if text == "":
+        # vaderSentiment 3.3.2 returns four zeros for empty input.
+        assert actual == {"V_pos": 0.0, "V_neg": 0.0,
+                          "V_neu": 0.0, "V_compound": 0.0}
+    else:
+        assert abs(sum(actual[k] for k in ("V_pos", "V_neg", "V_neu")) - 1) <= .0011
 
 @pytest.mark.parametrize("invalid", [None, float("nan"), 3, ["hello"]])
 def test_invalid_text_rejected(invalid):
