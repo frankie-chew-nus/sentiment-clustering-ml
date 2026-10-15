@@ -115,3 +115,25 @@ Status: **implementation candidate; Colab validation pending; not approved for m
 **Evidence location:** N0 and N0-B executed Colab notebooks, review CSVs, and team slide deck are retained outside GitHub by project policy. This decision record summarizes observed findings and agreed methodology; no notebook/CSV uploaded.
 
 **Verification pending:** Unit tests, P1 corpus parity, full regression suite, and user review before PR/merge. No performance superiority claimed.
+
+## L3-N-VAL-01 — P1 full-dataset parity and regression verification (2026-10-15)
+
+**Evidence source:** User-run Google Colab, using the agreed P1 CSV and feature branch implementation. Results supplied in the conversation; this GitHub record does not claim independent rerun.
+
+| Check | Observed |
+|---|---|
+| P1 source filename | `Tweets-processed-p1.csv` |
+| P1 SHA256 | `fdeab9faa57b7ffb7ac33335aebafc5f153849d94647e0118d02e809a86c632e` |
+| Source size | 3,012,428 bytes |
+| Rows extracted | 14,639 |
+| Tweets with `N_negation_count > 0` | 4,916 |
+| Tweets with `N_intensifier_original_count > 0` | 1,823 |
+| Tweets with `N_intensifier_conservative_count > 0` | 693 |
+| N-feature automated tests | 23 passed (user reported) |
+| Full project regression tests | 93 passed (user reported) |
+
+The executed Colab assertion comparing row count and three coverage counts with the prior N0/N0-B audit returned `N0/N0-B audit parity: PASSED`. The P1 SHA256 matches the previously recorded P1 audit fingerprint.
+
+**Interpretation:** The implemented N features reproduce audited corpus-level counts and pass the reported unit/regression checks. This validates extraction consistency, **not** sentiment-clustering improvement, nor the superiority of N2 versus N3.
+
+**Remaining validation before PR:** Export/review the feature-only N CSV schema, sequential row identifiers, value ranges, and absence of sentiment labels/confidence; document any anomalies. Keep notebooks and datasets outside GitHub. User reviews PR and supplies any additional evidence before merging.
