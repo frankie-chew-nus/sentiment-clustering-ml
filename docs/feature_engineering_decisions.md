@@ -85,3 +85,13 @@ Status: **implementation candidate; Colab validation pending; not approved for m
 **Testing evidence:** User reported targeted VADER tests **16/16 passed** and full regression suite **70/70 passed** after dependency installation. No preprocessing changes were required.
 
 **Decision / status:** Feature CSV numerical review accepted; **merge remains subject to source-provenance confirmation and user review**. Keep `V_neu` in the master feature CSV but exclude it from initial V1/V2 clustering selections. Do not commit notebooks or CSV datasets to GitHub without explicit user approval.
+
+## L3-VADER-PROV-01 — RAW source fingerprint verification (2026-10-15)
+
+**User-run Google Colab verification:** `raw_csv_fingerprint()` returned source filename `Tweets-redacted.csv` and SHA256 `a41aeefcff9740c090153f608691d345c84f59084e40f03169c2f667df66578e`. Comparison with the original V0 audit fingerprint returned **True**; the assertion passed.
+
+**Combined validation evidence:** Targeted VADER suite 16/16 passed; full regression suite 70/70 passed (user-reported Colab outputs). Uploaded master VADER CSV passed numerical/schema checks: 14,639 rows, row IDs 0–14,638, four VADER columns, 2,323 exact-zero compound values, 2,269 with both pos/neg zero, 2,915 unique compound values, and no sentiment label/confidence columns.
+
+**Scope of confirmation:** The current RAW file matches the audited source byte-for-byte. Matching CSV statistics support consistency but do not independently prove the export's generation history or every row-level correspondence. For future exports, save the input SHA256 and code revision in an external run manifest or executed notebook.
+
+**Disposition:** Ready for user merge review of `feature/l3-vader-engineering`. No merge performed. V1/V2 remain alternative unsupervised clustering configurations; no ground-truth-label-based selection has occurred. No notebooks or datasets committed to GitHub.
