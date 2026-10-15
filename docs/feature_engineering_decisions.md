@@ -95,3 +95,23 @@ Status: **implementation candidate; Colab validation pending; not approved for m
 **Scope of confirmation:** The current RAW file matches the audited source byte-for-byte. Matching CSV statistics support consistency but do not independently prove the export's generation history or every row-level correspondence. For future exports, save the input SHA256 and code revision in an external run manifest or executed notebook.
 
 **Disposition:** Ready for user merge review of `feature/l3-vader-engineering`. No merge performed. V1/V2 remain alternative unsupervised clustering configurations; no ground-truth-label-based selection has occurred. No notebooks or datasets committed to GitHub.
+
+## L3-N0 / N0-B — Negation and intensity audits (2026-10-15)
+
+**Status:** Label-blind audit reviewed; N0–N3 definitions approved as experimental alternatives. Implementation and Colab validation pending.
+
+**Input:** Validated P1 `processed_text` (not RAW/P2); 14,639 tweets. Reported P1 SHA256: `fdeab9faa57b7ffb7ac33335aebafc5f153849d94647e0118d02e809a86c632e`. P1 contraction expansion makes e.g. `can't` into `can not`.
+
+**N0 prevalence:** Negation in 4,916 tweets (33.58%); original-vocabulary intensifier in 1,823 (12.45%); both in 680 (4.65%); neither in 8,580 (58.61%). Dominant negation matches: `not` 3,906, `no` 1,515, `never` 321, `nothing` 157. Frequent original intensifiers: `so` 901, `really` 302, `very` 268, `too` 240.
+
+**N0-B comparison:** Original 13-word vocabulary: 1,823 tweets (12.45%), 1,993 token matches. Conservative 8-word candidate: 693 tweets (4.73%), 722 token matches. Reduction: 1,130 tweets lose all matches and 1,271 token matches (63.8%). Removed words: `so` 901, `too` 240, `seriously` 80, `pretty` 43, `quite` 7.
+
+**Qualitative audit:** 55 word-stratified sampled contexts reviewed without sentiment labels: 14 clear sentiment intensifiers, 8 other degree modifiers, 31 discourse/other, 2 uncertain. This is **not** a corpus-wide error estimate. The removed words include genuine sentiment uses (e.g. `pretty frustrating`) and unrelated uses (e.g. `so I called`, `me too`).
+
+**Agreed feature candidates:** N0 none; N1 negation count; N2 negation + original intensifier count; N3 negation + conservative intensifier count. N2 and N3 are mutually exclusive selection variants. Compute both count columns once for master features; do not include ground-truth labels or confidence columns. Do not treat negation count as negative polarity. No sentiment thresholds or large grammar rules.
+
+**Implementation constraints:** Reuse existing `config.NEGATION_WORDS` and `config.INTENSIFIER_WORDS` as canonical lists; retain a frozen conservative subset in `feature_engineering_config.py`. Match whole tokens on P1. Preserve row order and sequential row_id; record input SHA256. Scaling and clustering performance comparisons are downstream.
+
+**Evidence location:** N0 and N0-B executed Colab notebooks, review CSVs, and team slide deck are retained outside GitHub by project policy. This decision record summarizes observed findings and agreed methodology; no notebook/CSV uploaded.
+
+**Verification pending:** Unit tests, P1 corpus parity, full regression suite, and user review before PR/merge. No performance superiority claimed.
