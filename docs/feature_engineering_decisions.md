@@ -29,3 +29,15 @@ Status: **implementation candidate; Colab validation pending; not approved for m
 ## Limitations
 - RAW names/hashtags can affect VADER; sarcasm and mixed opinions remain challenging.
 - Sequential row IDs are valid only for the same source file and row order.
+
+## L3-VADER-FIX-01 — Empty-string component-sum test correction (2026-10-15)
+
+**Evidence:** First Colab run of `tests/test_feature_engineering.py` reported **15 passed, 1 failed**. The failing case was `test_exact_library_scores[""]`: the test asserted `V_pos + V_neg + V_neu ≈ 1` for an empty string, but the sum was 0.0. The preceding direct-library equality assertion passed, supporting that the extractor matched `vaderSentiment==3.3.2` and the test assumption was incorrect.
+
+**Decision and rationale:** Keep the empty-string case in the test suite. For exactly empty text, explicitly assert that all four VADER scores are zero. For nonempty test strings, retain the existing approximate sum-to-one assertion (tolerance 0.0011). No handcrafted sentiment thresholds or modifications to the VADER library.
+
+**Changed file:** `tests/test_feature_engineering.py` only. `feature_engineering.py`, `feature_engineering_config.py`, preprocessing P0/P1/P2 and dataset are unchanged.
+
+**Verification status:** Correction committed to feature branch; **Colab rerun pending**. Expected 16 passing tests is a hypothesis, not yet an observed result. After rerun, capture test output and full regression results before merge.
+
+**Scope:** This is a test-correctness fix, not evidence of improved clustering or a feature-methodology change. Sentiment labels/confidence remain excluded.
