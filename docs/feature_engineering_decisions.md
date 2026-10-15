@@ -162,3 +162,27 @@ The executed Colab assertion comparing row count and three coverage counts with 
 **Limitations:** The CSV alone does not authenticate the full extraction history or prove sentiment-clustering benefit. N1, N2, and N3 remain controlled alternatives; neither intensifier vocabulary has been selected using ground-truth labels.
 
 **Disposition:** Candidate implementation and evidence ready for user PR review. User supplies/reviews supporting evidence and performs the merge. No notebooks, slide decks, or CSV datasets committed to GitHub.
+
+## L3-S0 / S0-B / S0-C — Structural expression audit and implementation (2026-10-15)
+
+**Status:** Candidate S0–S3 implementation committed to feature branch; Colab unit tests, full regression and corpus parity are **pending**. No PR or merge yet.
+
+**Objective and leakage control:** Capture sentiment expression (not sentiment polarity or topic) using original RAW tweets, with a temporary URL-excluded view. Do not use airline_sentiment or confidence columns. RAW, P0/P1/P2 and existing V/N feature definitions are unchanged.
+
+**S0 label-blind audit:** 14,639 RAW tweets; exclamation marks in 3,226 (22.04%), uppercase emphasis in 4,256 (29.07%), emojis in 492 (3.36%). Exclamation mean 0.363, median 0, p95 2, max 27; emoji mean 0.0676, median 0, p95 0, max 40. Spearman correlations: exclamation–uppercase 0.0514, exclamation–emoji 0.0497, uppercase–emoji 0.0065. These are expression indicators, not positive/negative labels.
+
+**S0-B URL sensitivity:** 1,175 tweets (8.03%) contained matched URLs; 388 tweets (2.65%) changed at least one S feature. Exclamation changes 0; uppercase-ratio changes 386; emoji changes 3. S0-B sometimes consumed emojis directly adjacent to URLs.
+
+**S0-C boundary correction:** Revised URL matching preserves adjacent emoji sequences and terminal punctuation. All 14,639 tweets retained their original emoji sequences (0 losses), exclamation changes remained 0; compared with S0-B, uppercase changed in 2 tweets and emoji count in 3. Means (RAW / S0-B / S0-C): exclamation 0.362866 / 0.362866 / 0.362866; uppercase 0.028206 / 0.028815 / 0.028830; emoji 0.067559 / 0.067218 / 0.067559. The S0 initial audit and later audits used slightly different uppercase tokenization rules; **do not interpret cross-audit uppercase means as pure URL effects**.
+
+**Agreed candidate feature definitions:**
+- `S_exclamation_count`: number of literal `!` characters in temporary URL-excluded RAW text.
+- `S_uppercase_ratio`: count of eligible alphabetic tokens (at least 2 letters) that are entirely uppercase, divided by eligible-token count; 0 if none. Uses the S0-C Unicode-aware regex definition.
+- `S_emoji_count`: count of emoji sequences via `emoji.emoji_list` after temporary URL exclusion.
+- S0 none; S1 exclamation; S2 exclamation + uppercase; S3 all three. Raw counts/ratios retained unscaled in feature CSV; scaling is deferred to the clustering pipeline.
+
+**Limitations:** URL boundaries are heuristic; uppercase acronyms, airport codes, handles and hashtags may still contribute noise. Emoji count is sparse. VADER also reacts to punctuation, case and emoji; marginal clustering value must be tested later. No handcrafted polarity thresholds.
+
+**Evidence storage:** S0, S0-B, S0-C audit ZIPs and permanent team PowerPoint are held outside GitHub; no notebooks, datasets, slides or large outputs are committed.
+
+**Verification gate:** Run `tests/test_s_features.py`, then `python -m pytest -q` for full regression; verify RAW SHA256 `a41aeefcff9740c090153f608691d345c84f59084e40f03169c2f667df66578e`, 14,639 rows, S0-C corpus means and emoji preservation. Export and review feature-only CSV before opening PR. User adds evidence and merges only after review.
