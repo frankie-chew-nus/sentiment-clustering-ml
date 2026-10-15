@@ -41,3 +41,13 @@ Status: **implementation candidate; Colab validation pending; not approved for m
 **Verification status:** Correction committed to feature branch; **Colab rerun pending**. Expected 16 passing tests is a hypothesis, not yet an observed result. After rerun, capture test output and full regression results before merge.
 
 **Scope:** This is a test-correctness fix, not evidence of improved clustering or a feature-methodology change. Sentiment labels/confidence remain excluded.
+
+## L3-VADER-ENV-01 — Full regression suite dependency setup (2026-10-15)
+
+**Observed in user-run Google Colab:** After FIX-01, the targeted VADER suite passed **16/16**. The first full regression run reported **56 passed, 14 failed**. Failure traces were ImportErrors for preprocessing dependencies `emoji`, `num2words`, and `wordninja`, already declared in `requirements.txt`. This indicates an incomplete Colab environment rather than demonstrated preprocessing regression.
+
+**Corrective action:** Install repository dependencies using `%pip install -r requirements-dev.txt` and the P2 spaCy model using `!python -m spacy download en_core_web_sm`, then rerun `!python -m pytest -q`.
+
+**User-reported verification:** Full regression suite **70 passed** after setup. This is user-reported console output, not independently reproduced by this document update. The VADER implementation and preprocessing source were not modified for ENV-01.
+
+**Decision:** Treat ENV-01 as an environment/setup issue; retain existing P0/P1/P2 code. Full-dataset VADER extraction and V0 audit parity checks remain the next validation gate before merge.
