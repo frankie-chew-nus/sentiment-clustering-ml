@@ -186,3 +186,29 @@ The executed Colab assertion comparing row count and three coverage counts with 
 **Evidence storage:** S0, S0-B, S0-C audit ZIPs and permanent team PowerPoint are held outside GitHub; no notebooks, datasets, slides or large outputs are committed.
 
 **Verification gate:** Run `tests/test_s_features.py`, then `python -m pytest -q` for full regression; verify RAW SHA256 `a41aeefcff9740c090153f608691d345c84f59084e40f03169c2f667df66578e`, 14,639 rows, S0-C corpus means and emoji preservation. Export and review feature-only CSV before opening PR. User adds evidence and merges only after review.
+
+## L3-S-VAL-01 — Colab test and full-corpus parity evidence (2026-10-15)
+
+**Evidence source:** User-reported Colab outputs from the S feature branch; results were not independently rerun by this documentation update.
+
+- S-specific automated tests: **19 passed**.
+- Full project regression suite: **112 passed**.
+- RAW source: `Tweets-redacted.csv`, SHA256 `a41aeefcff9740c090153f608691d345c84f59084e40f03169c2f667df66578e`, 1,561,768 bytes.
+- Rows: **14,639**; `row_id` 0–14,638.
+- Output columns: `row_id`, `S_exclamation_count`, `S_uppercase_ratio`, `S_emoji_count`.
+
+| Statistic | Exclamation count | Uppercase ratio | Emoji count |
+|---|---:|---:|---:|
+| Mean | 0.3628663160051916 | 0.028830265685066452 | 0.06755925951226177 |
+| Standard deviation | 0.919735 | 0.076977 | 0.617202 |
+| Minimum | 0 | 0 | 0 |
+| 25th percentile | 0 | 0 | 0 |
+| Median | 0 | 0 | 0 |
+| 75th percentile | 0 | 0.041667 | 0 |
+| Maximum | 27 | 0.956522 | 40 |
+
+Tweets with `S_emoji_count > 0`: **492**.
+
+**Assessment:** Feature means and emoji prevalence match S0-C audit values to displayed precision. The RAW source fingerprint matches the earlier audit. The reported 19/19 and 112/112 tests passed. These establish extraction and regression consistency, not a sentiment-clustering benefit.
+
+**Next verification:** Export and review feature-only CSV for schema, nonnegative counts, valid ratios, sequential row IDs, and absence of sentiment labels/confidence; capture any anomalies before PR. No notebook or CSV committed.
