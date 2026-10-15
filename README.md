@@ -14,19 +14,20 @@ The project objective is sentiment-oriented clustering, not perfect grammatical 
 
 Preprocessing P0-P2 is complete and validated.
 
-- **P0 — basic cleaning:** URL removal; airline mentions/names/hashtags normalized to the generic token `airline`; non-airline mentions removed; other hashtag content retained.
+- **P0 — basic cleaning:** HTML entity decoding, URL removal; airline mentions/names/hashtags normalized to the generic token `airline`; non-airline mentions removed; other hashtag content retained.
 - **P1 — text normalization:** P0 + contraction expansion, emoji descriptions, lowercasing; numbers and punctuation are preserved by default.
 - **P2 — lexical normalization:** P1 + Wordninja segmentation only for non-airline hashtag bodies, spaCy lemmatization, and protected stopword removal.
 - **Global Wordninja:** OFF after corpus audit showed damaging ordinary-word splits.
 - **Generic SymSpell spelling correction:** OFF after corpus audit showed harmful semantic/negation corrections.
 - **Decision history and audit evidence:** `docs/preprocessing_decisions.md`.
 
-The finalized P2 validation reached **51 automated tests passing** plus manual sentiment-preservation checks. Functional validation confirms that the code behaves as designed; it does not by itself establish that P2 will produce better clusters than P0/P1. That will be evaluated downstream.
+The preprocessing suite currently reaches **54 automated tests passing** after the HTML-decoding addition, alongside the earlier manual P2 sentiment-preservation checks and HTML-decoding validation. Functional validation confirms that the code behaves as designed; it does not by itself establish that P2 will produce better clusters than P0/P1. That will be evaluated downstream.
 
 ## Final preprocessing defaults
 
 | Operation | P0 | P1 | P2 |
 |---|---:|---:|---:|
+| HTML entity decoding | ON | ON | ON |
 | URL / mention / airline normalization | ON | ON | ON |
 | Contraction expansion | OFF | ON | ON |
 | Emoji description | OFF | ON | ON |
@@ -39,6 +40,12 @@ The finalized P2 validation reached **51 automated tests passing** plus manual s
 | spaCy lemmatization | OFF | OFF | ON |
 | Protected stopword removal | OFF | OFF | ON |
 | Negation protection | n/a | n/a | ON |
+
+### HTML entity decoding
+
+P0 decodes HTML character references with Python's built-in `html.unescape()` before URL removal, and P1/P2 inherit this behavior. Examples include `&amp;` -> `&`, `&gt;` -> `>`, `&quot;` -> `"`, and `&#39;` -> `'`.
+
+Decoding runs before URL removal so downstream processing receives restored text. This also allows encoded apostrophes to participate in contraction expansion (for example, `Don&#39;t` -> `Don't` -> `do not`). No extra package is required because `html` is part of Python's standard library.
 
 ## Install dependencies
 
