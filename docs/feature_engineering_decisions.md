@@ -238,3 +238,17 @@ Tweets with `S_emoji_count > 0`: **492**.
 **Other evidence:** User reported S-specific tests 19/19 and full suite 112/112 passed; RAW SHA256 `a41aeefcff9740c090153f608691d345c84f59084e40f03169c2f667df66578e` matched earlier audit.
 
 **Disposition:** Candidate implementation and CSV checks complete; ready for user PR review. CSV alone does not prove every row's provenance or improved sentiment clustering. No notebook, CSV or slides are committed to GitHub.
+
+## L3-M — Master V/N/S feature matrix assembly (2026-10-16)
+
+**Status:** Implementation candidate on `feature/l3-master-feature-matrix`; Colab validation pending, not merged.
+
+**Decision:** Defer optional airline/domain A because of topic-clustering risk. Assemble a single feature-only master CSV from the three previously validated exports. Retain all 10 unscaled engineered columns plus sequential `row_id`. V0–V2, N0–N3 and S0–S3 will be selected later through explicit configurations; `V_neu` and both intensifier variants remain in the master for audit/alternative selection, not simultaneous automatic inclusion.
+
+**Inputs:** `Tweets-L3-vader-features.csv` (4 V scores), `Tweets-L3-negation-intensity-features.csv` (3 N counts), `Tweets-L3-structural-features.csv` (3 S features). All correspond to 14,639 tweets in the same original row order. Previously verified RAW SHA256 `a41aeefcff9740c090153f608691d345c84f59084e40f03169c2f667df66578e` and P1 SHA256 `fdeab9faa57b7ffb7ac33335aebafc5f153849d94647e0118d02e809a86c632e`.
+
+**Safeguards:** Strict exact schemas reject unexpected columns (including labels/confidence), duplicate/missing/nonsequential row IDs, missing/non-finite values, negative/fractional count features and invalid VADER/ratio ranges. Inner one-to-one join by `row_id` and exact post-merge feature equality checks. Output is unscaled, without text or ground-truth sentiment columns. The adjacent JSON manifest records input/output SHA256 hashes, source-hash references, schema and row count.
+
+**Limitations:** Sequential IDs and per-file hashes do not cryptographically prove that all three exports came from the same source order. Source hashes in the manifest are reference values supplied by the validation run; stronger future provenance can record each extraction's source fingerprint and Git commit at generation time. No sentiment-clustering performance is established by successful assembly.
+
+**Evidence gate:** Run `tests/test_master_feature_matrix.py` and full regression suite in Colab, export master CSV and manifest, verify 14,639 rows / 11 columns / exact column equality, then share output for review. Document actual test and export results before creating PR. No notebooks or datasets in GitHub; user reviews PR and merges.
