@@ -291,3 +291,12 @@ Tweets with `S_emoji_count > 0`: **492**.
 **Interpretation:** Assembly integrity and numerical consistency verified. The RAW/P1 hashes in the manifest are references to previously audited sources; the manifest alone does not prove the intermediate extraction history. No clustering-performance claims or sentiment-label-based feature selection.
 
 **Next gate:** Confirm warning-free FIX-01 targeted/full test rerun in Colab before opening PR for user evidence review and merge. No notebooks or datasets uploaded to GitHub.
+
+## L3-M-FIX-01 — Warning-free test rerun confirmed (2026-10-17)
+
+**User-run Colab evidence after commit `7a1b227`:**
+- Targeted master-matrix tests: **19 passed in 0.61s**, no warning displayed.
+- Full project regression suite: **131 passed in 4.96s**, no warning displayed.
+- Colab fast-forwarded the branch from `9fd4415` to `2585870` before running tests.
+
+This confirms the test-only dtype correction resolved the reported pandas warning in the user's rerun. Production assembler logic is unchanged by FIX-01.
