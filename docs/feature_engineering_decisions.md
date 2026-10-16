@@ -238,3 +238,65 @@ Tweets with `S_emoji_count > 0`: **492**.
 **Other evidence:** User reported S-specific tests 19/19 and full suite 112/112 passed; RAW SHA256 `a41aeefcff9740c090153f608691d345c84f59084e40f03169c2f667df66578e` matched earlier audit.
 
 **Disposition:** Candidate implementation and CSV checks complete; ready for user PR review. CSV alone does not prove every row's provenance or improved sentiment clustering. No notebook, CSV or slides are committed to GitHub.
+
+## L3-M — Master V/N/S feature matrix assembly (2026-10-16)
+
+**Status:** Implementation candidate on `feature/l3-master-feature-matrix`; Colab validation pending, not merged.
+
+**Decision:** Defer optional airline/domain A because of topic-clustering risk. Assemble a single feature-only master CSV from the three previously validated exports. Retain all 10 unscaled engineered columns plus sequential `row_id`. V0–V2, N0–N3 and S0–S3 will be selected later through explicit configurations; `V_neu` and both intensifier variants remain in the master for audit/alternative selection, not simultaneous automatic inclusion.
+
+**Inputs:** `Tweets-L3-vader-features.csv` (4 V scores), `Tweets-L3-negation-intensity-features.csv` (3 N counts), `Tweets-L3-structural-features.csv` (3 S features). All correspond to 14,639 tweets in the same original row order. Previously verified RAW SHA256 `a41aeefcff9740c090153f608691d345c84f59084e40f03169c2f667df66578e` and P1 SHA256 `fdeab9faa57b7ffb7ac33335aebafc5f153849d94647e0118d02e809a86c632e`.
+
+**Safeguards:** Strict exact schemas reject unexpected columns (including labels/confidence), duplicate/missing/nonsequential row IDs, missing/non-finite values, negative/fractional count features and invalid VADER/ratio ranges. Inner one-to-one join by `row_id` and exact post-merge feature equality checks. Output is unscaled, without text or ground-truth sentiment columns. The adjacent JSON manifest records input/output SHA256 hashes, source-hash references, schema and row count.
+
+**Limitations:** Sequential IDs and per-file hashes do not cryptographically prove that all three exports came from the same source order. Source hashes in the manifest are reference values supplied by the validation run; stronger future provenance can record each extraction's source fingerprint and Git commit at generation time. No sentiment-clustering performance is established by successful assembly.
+
+**Evidence gate:** Run `tests/test_master_feature_matrix.py` and full regression suite in Colab, export master CSV and manifest, verify 14,639 rows / 11 columns / exact column equality, then share output for review. Document actual test and export results before creating PR. No notebooks or datasets in GitHub; user reviews PR and merges.
+
+## L3-M-FIX-01 — Pandas dtype warning in invalid-count test (2026-10-17)
+
+**User-run Colab evidence:** Initial targeted master-matrix suite **19 passed, 1 warning**; full project suite **131 passed, 1 warning**. The warning was a pandas `FutureWarning` from `tests/test_master_feature_matrix.py::test_invalid_values[S_exclamation_count-1.5]`: assigning the deliberately invalid float `1.5` into an integer-typed test column may become an error in a future pandas version.
+
+**Root cause:** Test fixture construction, not the master assembler. The invalid fractional count was correctly rejected by the assembler, so the test passed.
+
+**Correction:** In the specific `S_exclamation_count=1.5` test case, explicitly cast that test column to `float64` before inserting the invalid value. The test still verifies that fractional count features are rejected. No production feature logic, dataset, or preprocessing changes.
+
+**Verification status:** Test-only fix committed on `feature/l3-master-feature-matrix`. **Colab rerun pending**; do not claim the warning has disappeared until confirmed. Rerun targeted and full suites, then proceed to master CSV assembly and provenance review.
+
+**GitHub policy:** No notebooks, CSVs, or slides committed; PR only after user evidence review.
+
+## L3-M-VAL-01 — Final master CSV and manifest review (2026-10-17)
+
+**Evidence source:** User-uploaded ZIP containing three regenerated family CSVs, `Tweets-L3-master-features.csv`, and `Tweets-L3-master-features.manifest.json`. Reviewed directly for row alignment, schema, values, and SHA256. The earlier user-run targeted and full regression suites reported **19 passed / 131 passed**, with a pandas warning; the subsequent FIX-01 warning-free rerun has **not yet been confirmed**.
+
+| Check | Observed |
+|---|---|
+| Master shape | 14,639 rows × 11 columns (row_id + 10 engineered features) |
+| Row IDs | 0–14,638, sequential, no duplicates |
+| Feature values | All 10 master columns exactly equal corresponding source CSV columns |
+| Missing / invalid feature values | 0 observed |
+| Ground-truth sentiment or confidence columns | None |
+| Input hashes vs manifest | All three match |
+| Output hash vs manifest | Matches |
+| Scaled / labels loaded (manifest flags) | false / false |
+
+**SHA256 values:**
+- VADER CSV: `93d8b4e29c2ee9db2c18d75801272f4ab99508a43b5ddf6165cd56522d5a523b`
+- N CSV: `2b0549a61b819bf861f93c183b7c66b48a66e5dc9e50055c33b47c98cb88d614`
+- S CSV: `2e1710c22765d204ada0ff3ac1da36f7d4ba7334cdcda2c5ec01e29fb1bccbec`
+- Master CSV: `abb285f95c28a59bb35cbb797faabdcaac894f1c7d04885b4e7789dd3d88067c`
+
+**Mean feature values:** V_pos 0.156853; V_neg 0.081658; V_neu 0.761488; V_compound 0.135175; N_negation_count 0.407200; N_intensifier_original_count 0.136143; N_intensifier_conservative_count 0.049320; S_exclamation_count 0.362866; S_uppercase_ratio 0.028830; S_emoji_count 0.067559.
+
+**Interpretation:** Assembly integrity and numerical consistency verified. The RAW/P1 hashes in the manifest are references to previously audited sources; the manifest alone does not prove the intermediate extraction history. No clustering-performance claims or sentiment-label-based feature selection.
+
+**Next gate:** Confirm warning-free FIX-01 targeted/full test rerun in Colab before opening PR for user evidence review and merge. No notebooks or datasets uploaded to GitHub.
+
+## L3-M-FIX-01 — Warning-free test rerun confirmed (2026-10-17)
+
+**User-run Colab evidence after commit `7a1b227`:**
+- Targeted master-matrix tests: **19 passed in 0.61s**, no warning displayed.
+- Full project regression suite: **131 passed in 4.96s**, no warning displayed.
+- Colab fast-forwarded the branch from `9fd4415` to `2585870` before running tests.
+
+This confirms the test-only dtype correction resolved the reported pandas warning in the user's rerun. Production assembler logic is unchanged by FIX-01.
