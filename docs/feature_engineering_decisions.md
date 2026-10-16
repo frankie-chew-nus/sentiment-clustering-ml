@@ -264,3 +264,30 @@ Tweets with `S_emoji_count > 0`: **492**.
 **Verification status:** Test-only fix committed on `feature/l3-master-feature-matrix`. **Colab rerun pending**; do not claim the warning has disappeared until confirmed. Rerun targeted and full suites, then proceed to master CSV assembly and provenance review.
 
 **GitHub policy:** No notebooks, CSVs, or slides committed; PR only after user evidence review.
+
+## L3-M-VAL-01 — Final master CSV and manifest review (2026-10-17)
+
+**Evidence source:** User-uploaded ZIP containing three regenerated family CSVs, `Tweets-L3-master-features.csv`, and `Tweets-L3-master-features.manifest.json`. Reviewed directly for row alignment, schema, values, and SHA256. The earlier user-run targeted and full regression suites reported **19 passed / 131 passed**, with a pandas warning; the subsequent FIX-01 warning-free rerun has **not yet been confirmed**.
+
+| Check | Observed |
+|---|---|
+| Master shape | 14,639 rows × 11 columns (row_id + 10 engineered features) |
+| Row IDs | 0–14,638, sequential, no duplicates |
+| Feature values | All 10 master columns exactly equal corresponding source CSV columns |
+| Missing / invalid feature values | 0 observed |
+| Ground-truth sentiment or confidence columns | None |
+| Input hashes vs manifest | All three match |
+| Output hash vs manifest | Matches |
+| Scaled / labels loaded (manifest flags) | false / false |
+
+**SHA256 values:**
+- VADER CSV: `93d8b4e29c2ee9db2c18d75801272f4ab99508a43b5ddf6165cd56522d5a523b`
+- N CSV: `2b0549a61b819bf861f93c183b7c66b48a66e5dc9e50055c33b47c98cb88d614`
+- S CSV: `2e1710c22765d204ada0ff3ac1da36f7d4ba7334cdcda2c5ec01e29fb1bccbec`
+- Master CSV: `abb285f95c28a59bb35cbb797faabdcaac894f1c7d04885b4e7789dd3d88067c`
+
+**Mean feature values:** V_pos 0.156853; V_neg 0.081658; V_neu 0.761488; V_compound 0.135175; N_negation_count 0.407200; N_intensifier_original_count 0.136143; N_intensifier_conservative_count 0.049320; S_exclamation_count 0.362866; S_uppercase_ratio 0.028830; S_emoji_count 0.067559.
+
+**Interpretation:** Assembly integrity and numerical consistency verified. The RAW/P1 hashes in the manifest are references to previously audited sources; the manifest alone does not prove the intermediate extraction history. No clustering-performance claims or sentiment-label-based feature selection.
+
+**Next gate:** Confirm warning-free FIX-01 targeted/full test rerun in Colab before opening PR for user evidence review and merge. No notebooks or datasets uploaded to GitHub.
