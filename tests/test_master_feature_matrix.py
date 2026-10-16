@@ -69,6 +69,10 @@ def test_invalid_values(column, value):
     v, n, s = frames()
     for part in (v, n, s):
         if column in part.columns:
+            # A fractional count is deliberately invalid. Convert the test
+            # column first so pandas does not warn about incompatible dtype.
+            if column == "S_exclamation_count" and value == 1.5:
+                part[column] = part[column].astype("float64")
             part.loc[0, column] = value
     with pytest.raises(ValueError):
         assemble_frames(v, n, s, 3)
