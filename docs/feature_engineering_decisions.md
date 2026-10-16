@@ -252,3 +252,15 @@ Tweets with `S_emoji_count > 0`: **492**.
 **Limitations:** Sequential IDs and per-file hashes do not cryptographically prove that all three exports came from the same source order. Source hashes in the manifest are reference values supplied by the validation run; stronger future provenance can record each extraction's source fingerprint and Git commit at generation time. No sentiment-clustering performance is established by successful assembly.
 
 **Evidence gate:** Run `tests/test_master_feature_matrix.py` and full regression suite in Colab, export master CSV and manifest, verify 14,639 rows / 11 columns / exact column equality, then share output for review. Document actual test and export results before creating PR. No notebooks or datasets in GitHub; user reviews PR and merges.
+
+## L3-M-FIX-01 — Pandas dtype warning in invalid-count test (2026-10-17)
+
+**User-run Colab evidence:** Initial targeted master-matrix suite **19 passed, 1 warning**; full project suite **131 passed, 1 warning**. The warning was a pandas `FutureWarning` from `tests/test_master_feature_matrix.py::test_invalid_values[S_exclamation_count-1.5]`: assigning the deliberately invalid float `1.5` into an integer-typed test column may become an error in a future pandas version.
+
+**Root cause:** Test fixture construction, not the master assembler. The invalid fractional count was correctly rejected by the assembler, so the test passed.
+
+**Correction:** In the specific `S_exclamation_count=1.5` test case, explicitly cast that test column to `float64` before inserting the invalid value. The test still verifies that fractional count features are rejected. No production feature logic, dataset, or preprocessing changes.
+
+**Verification status:** Test-only fix committed on `feature/l3-master-feature-matrix`. **Colab rerun pending**; do not claim the warning has disappeared until confirmed. Rerun targeted and full suites, then proceed to master CSV assembly and provenance review.
+
+**GitHub policy:** No notebooks, CSVs, or slides committed; PR only after user evidence review.
