@@ -85,6 +85,25 @@ Output folder: `/content/drive/MyDrive/MSI5001 project/EDA/L4-Vec_norm/M3 featur
 | W1 | 14639 x 79796 | 3728386 | `90cdac5f0d5b1cb094a083840bc39feec10bbb7187a76b2cb60a252b16d352fe` |
 | W2 | 14639 x 79796 | 3728386 | `4bc8084385ebfdf95f3f5422661895a1081a97fe561f93ef654198001811759e` |
 
-All three exported NPZ matrices were reloaded in Colab and passed shape, NNZ, finite-value, exact reload equality and SHA256 checks against their JSON manifests. This is **user-run verification**; raw M3 exports have not been independently uploaded to this conversation for separate verification.
+All three exported NPZ matrices were reloaded in Colab and passed shape, NNZ, finite-value, exact reload equality and SHA256 checks against their JSON manifests. This was initially **user-run verification**; the exports were subsequently uploaded and independently inspected, as recorded in L4-M3-VAL-02 below.
 
 **Limitations:** No clustering, labels, or outcome-based tuning. M3 does not determine optimal weights. The manifests link the M1 files and master dataset by hashes but cannot independently prove M1-to-master row mapping; preserve the L2/L3/M1 alignment evidence. Combined word and character information can be redundant. Review PR before merge.
+
+
+## L4-M3-VAL-02 — Independently reviewed exported artifacts (2026-10-17)
+
+The user uploaded `M3 feature integration-20261017T060551Z-1-001.zip` containing W0/W1/W2 NPZ matrices and their JSON manifests. The files were independently inspected outside Colab, following the user-run full-dataset validation recorded in L4-M3-VAL-01.
+
+| Artifact | Matrix shape | Stored nonzero entries | SHA256 |
+|---|---|---:|---|
+| W0.npz | 14639 x 79796 | 3728386 | `e2c1ab5f4dd463d4b7280ff13a93ef02638090a06406672c88296a4fbcdb3abd` |
+| W1.npz | 14639 x 79796 | 3728386 | `90cdac5f0d5b1cb094a083840bc39feec10bbb7187a76b2cb60a252b16d352fe` |
+| W2.npz | 14639 x 79796 | 3728386 | `4bc8084385ebfdf95f3f5422661895a1081a97fe561f93ef654198001811759e` |
+
+**Independent checks:** 3/3 matrices loaded as SciPy sparse matrices; 3/3 file SHA256 hashes matched the corresponding JSON manifests; 3/3 shapes and nonzero counts matched the Colab report; all stored numerical values were finite. Each manifest records the expected block coefficients, calibration method, source hashes and code revision.
+
+**Recorded provenance:** L3 master SHA256 `abb285f95c28a59bb35cbb797faabdcaac894f1c7d04885b4e7789dd3d88067c`; M1 `word_p1` SHA256 `fa4fdd28368f0c2f4f9cd234127ab1699b3c64935db4c08ed003fe821b1af672`; M1 `char_p0` SHA256 `f94b8e38dd3b0904905fef09e33607cb3c591f49391725d0f9a1753613818d20`. The recorded M3 implementation revision is `04e2674432b92eb8a0afab9db6b4bc300ec80fcb`.
+
+**Interpretation:** W0 observed 81.306362% text distance contribution; W1 achieved 20% per block; W2 achieved 70% text and 30% engineered contributions. These are distance-calibration results, not clustering-performance measurements. Row-level alignment relies on earlier L2/L3/M1 evidence rather than a row mapping stored in the NPZ files. No labels, K-means or outcome-based tuning were used.
+
+**GitHub workflow clarification:** PR #28 was merged. PR #29 was an unmerged revert proposal and was closed without merging. This documentation-only evidence update retains the M3 implementation on `main`.
