@@ -1,169 +1,155 @@
 # Airline Sentiment Clustering
 
-Modular Python code for unsupervised clustering of airline tweets by sentiment.
+Modular Python pipeline for **unsupervised clustering of airline tweets by sentiment**. The objective is sentiment discovery, not perfect linguistic reconstruction or word prediction.
 
-## Scope and context disclaimer
+> **Strict leakage rule:** `airline_sentiment` and every sentiment-confidence field are reserved **exclusively for post-clustering external evaluation**. They must not enter preprocessing, feature extraction, vectorization, feature selection, clustering, or tuning.
 
-This project is designed and validated specifically for the supplied **airline-tweet sentiment-clustering context**. Several preprocessing choices are intentionally domain- and corpus-aware, including airline alias normalization, airline hashtag handling, protected airline/sentiment vocabulary, and selective hashtag segmentation.
+## Project status
 
-The pipeline is modular and reusable as software, but the current configurations should **not be assumed to generalize unchanged to other domains or datasets**. If reused elsewhere, re-audit the aliases, protected terms, hashtag behavior, lexical normalization choices, and other corpus-specific assumptions before treating the outputs as appropriate.
+| Stage | Status | Evidence |
+|---|---|---|
+| L2 — Preprocessing | Complete: P0 / P1 / P2 | [Preprocessing decisions](docs/preprocessing_decisions.md) |
+| L3 — Feature engineering | Complete: V / N / S | [Feature-engineering decisions](docs/feature_engineering_decisions.md) |
+| L3 — Master feature matrix | Complete: 14,639 tweets × 10 engineered features, plus `row_id` | [PR #22](https://github.com/frankie-chew-nus/sentiment-clustering-ml/pull/22) |
+| L4 — Text representations and feature scaling | Next: methodology and implementation pending | Word/character TF-IDF; TF-IDF-weighted FastText |
+| L5 — Clustering and ablations | Pending | Label-blind clustering and controlled comparisons |
+| L6 — External evaluation | Pending | Compare discovered clusters with held-out sentiment labels |
 
-The project objective is sentiment-oriented clustering, not perfect grammatical reconstruction of tweets.
+**Latest user-verified regression result:** 131 tests passed (L3-M). Tests establish implementation consistency, **not** superior sentiment clustering.
 
-## Current status
+## Scope and generalization
 
-Preprocessing P0-P2 is complete and validated.
+The validated configurations target this airline-tweet corpus. Airline aliases, hashtag rules, protected terms and lexical decisions are corpus-specific; re-audit them before applying this pipeline to another domain. The original RAW tweet must remain available independently of processed variants.
 
-- **P0 — basic cleaning:** HTML entity decoding, URL removal; airline mentions/names/hashtags normalized to the generic token `airline`; non-airline mentions removed; other hashtag content retained.
-- **P1 — text normalization:** P0 + contraction expansion, emoji descriptions, lowercasing; numbers and punctuation are preserved by default.
-- **P2 — lexical normalization:** P1 + Wordninja segmentation only for non-airline hashtag bodies, spaCy lemmatization, and protected stopword removal.
-- **Global Wordninja:** OFF after corpus audit showed damaging ordinary-word splits.
-- **Generic SymSpell spelling correction:** OFF after corpus audit showed harmful semantic/negation corrections.
-- **Decision history and audit evidence:** `docs/preprocessing_decisions.md`.
-
-The preprocessing suite currently reaches **54 automated tests passing** after the HTML-decoding addition, alongside the earlier manual P2 sentiment-preservation checks and HTML-decoding validation. Functional validation confirms that the code behaves as designed; it does not by itself establish that P2 will produce better clusters than P0/P1. That will be evaluated downstream.
-
-## Final preprocessing defaults
+## L2 — Preprocessing
 
 | Operation | P0 | P1 | P2 |
-|---|---:|---:|---:|
-| HTML entity decoding | ON | ON | ON |
-| URL / mention / airline normalization | ON | ON | ON |
-| Contraction expansion | OFF | ON | ON |
-| Emoji description | OFF | ON | ON |
-| Lowercase | OFF | ON | ON |
-| Number conversion | OFF | OFF | OFF |
-| Punctuation removal | OFF | OFF | OFF |
-| Selective non-airline hashtag Wordninja | OFF | OFF | ON |
-| Global ordinary-text Wordninja | OFF | OFF | OFF |
-| SymSpell spelling correction | OFF | OFF | OFF |
-| spaCy lemmatization | OFF | OFF | ON |
-| Protected stopword removal | OFF | OFF | ON |
-| Negation protection | n/a | n/a | ON |
+|---|---|---|---|
+| HTML entity decoding; URL and airline/mention normalization | On | On | On |
+| Contraction expansion; emoji descriptions; lowercase | Off | On | On |
+| Preserve numbers and punctuation | Yes | Yes | Yes |
+| Wordninja for non-airline hashtag bodies only | Off | Off | On |
+| Global Wordninja; generic SymSpell correction | Off | Off | Off |
+| spaCy lemmatization; protected stopword removal | Off | Off | On |
+| Negation / sentiment / intensifier protection | n/a | n/a | On |
 
-### HTML entity decoding
+- **P0:** Decode HTML entities; remove URLs; normalize known airline mentions, names and hashtags to `airline`; remove non-airline mentions; preserve useful hashtag content and sentiment-bearing suffixes.
+- **P1:** P0 plus contraction expansion, emoji descriptions and lowercasing, while retaining punctuation and numbers.
+- **P2:** P1 plus selective non-airline hashtag splitting, lemmatization and protected stopword removal. Global splitting and generic spelling correction remain off after label-blind corpus audits.
 
-P0 decodes HTML character references with Python's built-in `html.unescape()` before URL removal, and P1/P2 inherit this behavior. Examples include `&amp;` -> `&`, `&gt;` -> `>`, `&quot;` -> `"`, and `&#39;` -> `'`.
+P0/P1/P2 are **candidate text inputs** for later vectorization, not an assumption that P2 necessarily clusters sentiment best. See [detailed preprocessing decisions](docs/preprocessing_decisions.md).
 
-Decoding runs before URL removal so downstream processing receives restored text. This also allows encoded apostrophes to participate in contraction expansion (for example, `Don&#39;t` -> `Don't` -> `do not`). No extra package is required because `html` is part of Python's standard library.
+## L3 — Engineered feature families
 
-## Install dependencies
+| Family | Input | Master columns | Configurations |
+|---|---|---|---|
+| **V — VADER** | RAW | `V_pos`, `V_neg`, `V_neu`, `V_compound` | V0 none; V1 compound; V2 pos + neg + compound |
+| **N — Negation / intensity** | Validated **P1** | `N_negation_count`, `N_intensifier_original_count`, `N_intensifier_conservative_count` | N0 none; N1 negation; N2 negation + original; N3 negation + conservative |
+| **S — Structural expression** | RAW with **temporary URL exclusion** | `S_exclamation_count`, `S_uppercase_ratio`, `S_emoji_count` | S0 none; S1 exclamation; S2 + uppercase; S3 + emoji |
 
-    python -m pip install -r requirements.txt
-    python -m pip install -r requirements-dev.txt
-    python -m spacy download en_core_web_sm
+**Why different inputs?** RAW retains capitalization, punctuation and emojis for V/S. P1 expands contractions (e.g., `can't` → `can not`) for consistent modifier counts in N. S uses the audited S0-C URL-boundary rule to preserve adjacent emoji and punctuation. No feature assigns handcrafted positive/negative sentiment classes.
 
-The spaCy model is required when P2 lemmatization or stopword removal is enabled. SymSpell remains available as an experimental function but is OFF in the finalized P2 configuration.
+The master feature CSV stores **all 10 unscaled engineered columns** and sequential `row_id`; it does **not** mean all columns are used together in clustering. `row_id` is alignment metadata, never a model feature. `V_neu` is initially audit-only, and N2/N3 are alternative intensifier representations. Selection and block scaling/weighting happen downstream.
 
-## Run tests
+**Deferred candidates:** Structured numerical ratings (low coverage and many non-rating matches), airline/domain context indicators (topic-clustering risk), and additional structural measures such as question marks, mixed punctuation and length. These were not all implemented or proven unnecessary.
 
-    python -m pytest -q
+## Repository guide
 
-## Process a single tweet
+| Path | Responsibility |
+|---|---|
+| `config.py`, `preprocessing.py` | Validated P0/P1/P2 configuration and preprocessing |
+| `feature_engineering_config.py` | V0–V2, N0–N3 and S0–S3 selection |
+| `feature_engineering.py` | V/N/S feature extraction |
+| `master_feature_matrix.py` | Validate and assemble family CSVs; export SHA256 manifest |
+| `tests/` | Preprocessing, feature and assembly regression tests |
+| `docs/preprocessing_decisions.md` | L2 audit/decision history |
+| `docs/feature_engineering_decisions.md` | L3 audits, changes, validation and limitations |
+| `notebooks/` | Demonstrations and user-approved notebook artifacts; consult folder for current versions |
 
-    from preprocessing import preprocess_text
-    from config import P0_CONFIG, P1_CONFIG, P2_CONFIG
+## Install and test
 
-    raw = "@united I can't wait 3 hours!!! 😡 #badcustomerservice"
+```bash
+git clone https://github.com/frankie-chew-nus/sentiment-clustering-ml.git
+cd sentiment-clustering-ml
+python -m pip install -r requirements-dev.txt
+python -m pip install vaderSentiment==3.3.2
+python -m spacy download en_core_web_sm
+python -m pytest -q
+```
 
-    print(preprocess_text(raw, P0_CONFIG))
-    print(preprocess_text(raw, P1_CONFIG))
-    print(preprocess_text(raw, P2_CONFIG))
+The spaCy model is required for P2. VADER is pinned to 3.3.2 for reproducibility. A clean Colab runtime may require reinstalling dependencies.
 
-## Define your own processing configuration
+## Quick examples
 
-The preprocessing function accepts a normal Python mapping. The simplest approach is to start from the closest validated configuration and override only the settings you want to change.
+**Preprocess one tweet:**
 
-For example, start from P2 but keep stopwords:
+```python
+from preprocessing import preprocess_text
+from config import P0_CONFIG, P1_CONFIG, P2_CONFIG
 
-    from config import P2_CONFIG
-    from preprocessing import preprocess_text
+raw = "@united I can't wait 3 hours!!! 😡 #badcustomerservice"
+for name, cfg in [("P0", P0_CONFIG), ("P1", P1_CONFIG), ("P2", P2_CONFIG)]:
+    print(name, preprocess_text(raw, cfg))
+```
 
-    MY_CONFIG = {
-        **P2_CONFIG,
-        "remove_stopwords": False,
-    }
+Custom preprocessing variants can be created with `{**P2_CONFIG, "remove_stopwords": False}`; do not overwrite the validated defaults. HTML decoding precedes URL removal, so encoded apostrophes can participate in contraction expansion.
 
-    processed = preprocess_text("I am not very disappointed with the delayed flights", MY_CONFIG)
-    print(processed)
+**Extract the three feature families:**
 
-Or start from P1 and enable only lemmatization:
+```python
+from feature_engineering import extract_vader_frame, extract_n_frame, extract_s_frame
 
-    MY_CONFIG = {
-        **P1_CONFIG,
-        "lemmatize": True,
-        "spacy_model": "en_core_web_sm",
-    }
+raw_texts = ["I can't believe this is SO BAD!!! 😡"]
+p1_texts = ["i can not believe this is so bad!!! enraged face"]
 
-This configuration pattern is intentional: P0/P1/P2 are validated reference configurations, while experiment-specific variants can be created without editing the core preprocessing functions.
+v = extract_vader_frame(raw_texts)  # RAW
+n = extract_n_frame(p1_texts)       # P1
+s = extract_s_frame(raw_texts)      # URL-excluded RAW internally
+```
 
-## Produce a processed CSV file
+**Generate the master CSV from existing family CSVs:**
 
-For a dataset containing a raw `text` column:
+```python
+from master_feature_matrix import assemble_csvs
 
-    import pandas as pd
+master, manifest_path = assemble_csvs(
+    vader_path="Tweets-L3-vader-features.csv",
+    negation_path="Tweets-L3-negation-intensity-features.csv",
+    structural_path="Tweets-L3-structural-features.csv",
+    output_path="Tweets-L3-master-features.csv",
+)
+print(master.shape, manifest_path)
+```
 
-    from preprocessing import preprocess_text
-    from config import P2_CONFIG
+The assembler enforces strict expected schemas, 14,639 sequential row IDs by default, valid numeric ranges and exact feature-value preservation. It produces a JSON manifest with input/output SHA256 hashes. These checks do not independently prove the entire extraction history of intermediate files.
 
-    INPUT_CSV = "/content/drive/My Drive/MSI5001 project/EDA/Tweets-redacted.csv"
-    OUTPUT_CSV = "/content/drive/My Drive/MSI5001 project/EDA/Tweets-processed-p2.csv"
+## Google Colab and Drive
 
-    df = pd.read_csv(INPUT_CSV)
+The project's validated Google Drive paths use **`MyDrive`**, not `My Drive`:
 
-    RUN_CONFIG = {
-        **P2_CONFIG,
-        # Override any settings for this particular export here.
-        # Example:
-        # "remove_stopwords": False,
-    }
+```python
+from pathlib import Path
+BASE = Path("/content/drive/MyDrive/MSI5001 project/EDA")
+RAW_PATH = BASE / "Tweets-redacted.csv"
+P1_PATH = BASE / "0.Processed-files" / "Tweets-processed-p1.csv"
+FEATURE_DIR = BASE / "L3_Feature_Engineering"
+```
 
-    df["processed_text"] = df["text"].fillna("").apply(
-        lambda text: preprocess_text(text, RUN_CONFIG)
-    )
+Mount Drive with `drive.mount("/content/drive")`, then clone/pull `main` (or the relevant review branch). After changing branches in a running notebook, restart the runtime or reload imported Python modules to avoid stale imports.
 
-    df.to_csv(OUTPUT_CSV, index=False)
+The executed L3 demonstration notebook is maintained in the repository by the project team. The duplicate, unexecuted `MSI5001_L3_Feature_Generation_Demo.ipynb` was removed as requested; use the current team-maintained executed version in `notebooks/`. Generated CSVs and manifests remain in Google Drive, not GitHub.
 
-    print("Rows:", len(df))
-    print("Saved:", OUTPUT_CSV)
+## Milestone PR history
 
-Keep the original `text` column. Do not overwrite it. This preserves the raw tweet for auditing and for later structural/VADER feature extraction.
+| PR | Scope | Latest milestone full-suite validation |
+|---|---|---|
+| [#19](https://github.com/frankie-chew-nus/sentiment-clustering-ml/pull/19) | VADER V0–V2 | 70 passed |
+| [#20](https://github.com/frankie-chew-nus/sentiment-clustering-ml/pull/20) | Negation/intensity N0–N3 | 93 passed |
+| [#21](https://github.com/frankie-chew-nus/sentiment-clustering-ml/pull/21) | Structural S0–S3 | 112 passed |
+| [#22](https://github.com/frankie-chew-nus/sentiment-clustering-ml/pull/22) | Master feature matrix | 131 passed |
 
-### Reproducibility recommendation
+Detailed audit findings, test corrections and evidence are maintained in `docs/`. The user reviews each PR, adds supporting evidence and merges manually.
 
-When exporting a processed dataset, record which configuration produced it. For notebook experiments, print the configuration next to the output:
+## Next steps
 
-    from pprint import pprint
-    pprint(RUN_CONFIG)
-
-For more formal experiment runs, save the configuration (or the P0/P1/P2 name plus overrides) alongside the output filename/experiment metadata. This avoids ambiguity about how a processed file was produced.
-
-## Use in Google Colab
-
-First clone the repository:
-
-    !git clone https://github.com/frankie-chew-nus/sentiment-clustering-ml.git
-
-Then:
-
-    import sys
-    sys.path.insert(0, "/content/sentiment-clustering-ml")
-
-    from preprocessing import preprocess_text
-    from config import P0_CONFIG, P1_CONFIG, P2_CONFIG
-
-If the repository is already cloned:
-
-    %cd /content/sentiment-clustering-ml
-    !git switch main
-    !git pull origin main
-
-After switching branches or pulling code during an active notebook session, reload imported modules or restart the runtime to avoid stale Python imports.
-
-## Methodological rules
-
-- Keep the raw tweet in a separate column.
-- Structural/style features and VADER scores should be extracted from original raw text unless an experiment explicitly justifies another representation.
-- Dataset sentiment labels and sentiment-confidence fields are reserved for **post-clustering external evaluation only**. They must not be used to choose preprocessing rules, engineered features, vectorization settings, clustering inputs, or unsupervised model tuning.
-- Corpus audits used to design preprocessing are label-free.
-- P0/P1/P2 are preprocessing hypotheses. Their downstream clustering value must be evaluated rather than assumed.
+L4 will compare **word TF-IDF**, **character TF-IDF**, **combined word + character TF-IDF**, and **TF-IDF-weighted FastText pooling**. We will agree on preprocessing choices, scaling, feature-block weighting and controlled ablations **before** implementation and clustering. Sentiment labels/confidence remain inaccessible until post-clustering external evaluation.
