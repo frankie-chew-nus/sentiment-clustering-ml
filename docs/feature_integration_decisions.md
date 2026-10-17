@@ -85,6 +85,20 @@ Output folder: `/content/drive/MyDrive/MSI5001 project/EDA/L4-Vec_norm/M3 featur
 | W1 | 14639 x 79796 | 3728386 | `90cdac5f0d5b1cb094a083840bc39feec10bbb7187a76b2cb60a252b16d352fe` |
 | W2 | 14639 x 79796 | 3728386 | `4bc8084385ebfdf95f3f5422661895a1081a97fe561f93ef654198001811759e` |
 
-All three exported NPZ matrices were reloaded in Colab and passed shape, NNZ, finite-value, exact reload equality and SHA256 checks against their JSON manifests. This is **user-run verification**; raw M3 exports have not been independently uploaded to this conversation for separate verification.
+All three exported NPZ matrices were reloaded in Colab and passed shape, NNZ, finite-value, exact reload equality and SHA256 checks against their JSON manifests. This is **user-run verification**; raw M3 exports were subsequently uploaded and independently verified; see L4-M3-VAL-02.
 
 **Limitations:** No clustering, labels, or outcome-based tuning. M3 does not determine optimal weights. The manifests link the M1 files and master dataset by hashes but cannot independently prove M1-to-master row mapping; preserve the L2/L3/M1 alignment evidence. Combined word and character information can be redundant. Review PR before merge.
+
+
+## L4-M3-VAL-02 — Independent uploaded-artifact verification (2026-10-17)
+
+The user uploaded `M3 feature integration-20261017T060551Z-1-001.zip`, containing W0/W1/W2 NPZ sparse matrices and matching JSON manifests. The files were independently opened and checked outside Colab:
+
+- **3/3** NPZ files load successfully as SciPy sparse matrices.
+- **3/3** SHA256 digests match their respective JSON manifest `matrix_sha256` fields.
+- **3/3** matrices have shape `(14639, 79796)` and `3728386` stored nonzero entries.
+- **3/3** matrices contain only finite stored values.
+- All manifests record code revision `04e2674432b92eb8a0afab9db6b4bc300ec80fcb`, L3 master hash `abb285f95c28a59bb35cbb797faabdcaac894f1c7d04885b4e7789dd3d88067c`, M1 word_p1 hash `fa4fdd28368f0c2f4f9cd234127ab1699b3c64935db4c08ed003fe821b1af672`, and M1 char_p0 hash `f94b8e38dd3b0904905fef09e33607cb3c591f49391725d0f9a1753613818d20`.
+- Recorded weighting coefficients agree with the user-reported calibration table; W0 coefficients are all 1, W1 and W2 are calibrated alternatives.
+
+**Scope of verification:** Integrity, shape, finiteness and manifest consistency were independently verified. Upstream row mapping and clustering usefulness were not independently established by this ZIP. No labels or K-means used.
