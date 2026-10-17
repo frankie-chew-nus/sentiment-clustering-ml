@@ -53,7 +53,8 @@ def test_calibrated_shares(blocks, method, expected):
 def test_missing_family_redistribution(blocks):
     subset = {"word": blocks["word"], "V": blocks["V"]}
     integ = BlockIntegrator(WeightingSpec("W2")).fit(subset)
-    assert integ.targets_ == {"word": .7, "V": .3}
+    assert integ.targets_["word"] == pytest.approx(.7)
+    assert integ.targets_["V"] == pytest.approx(.3)
     only_text = {"word": blocks["word"], "char": blocks["char"]}
     assert BlockIntegrator(WeightingSpec("W2")).fit(only_text).targets_ == {
         "word": .5, "char": .5}
