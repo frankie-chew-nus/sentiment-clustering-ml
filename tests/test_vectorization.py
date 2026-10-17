@@ -21,7 +21,15 @@ def test_sparse_shapes_and_norms(corpus, variant):
     assert matrix.shape[1] == sum(x["features"] for x in meta)
     assert np.isfinite(matrix.data).all()
     transformed = transform_representation(corpus, variant, fitted)
-    assert (matrix != transformed).nnz == 0
+    # TF-IDF fit_transform and transform may differ by floating-point rounding.
+    # Compare sparse values within numerical tolerance, not bit-for-bit equality.
+    assert transformed.shape == matrix.shape
+    difference = (matrix - transformed).tocsr()
+    difference.eliminate_zeros()
+    max_difference = float(np.max(np.abs(difference.data))) if difference.nnz else 0.0
+    assert max_difference <= 1e-12, (
+        f"{variant}: maximum fit/transform difference {max_difference:.3e}"
+    )
     for part in meta:
         assert part["parameters"]["norm"] == "l2"
 
