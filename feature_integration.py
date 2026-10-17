@@ -37,8 +37,10 @@ def _matrix(value, name):
             raise ValueError(f"Nonfinite values in {name}")
     else:
         arr = np.asarray(value, dtype=np.float64)
-        if arr.ndim != 2 or not np.isfinite(arr).all():
-            raise ValueError(f"{name} must be a finite two-dimensional matrix")
+        if arr.ndim != 2:
+            raise ValueError(f"{name} must be a two-dimensional matrix")
+        if not np.isfinite(arr).all():
+            raise ValueError(f"Nonfinite values in {name}")
         x = sparse.csr_matrix(arr)
     if x.shape[1] == 0:
         raise ValueError(f"Empty block {name}")
