@@ -1,6 +1,6 @@
 # L4-M2 engineered-feature scaling — implementation candidate
 
-Status: user-reported Colab regression and numerical validation passed; provenance details pending final review. Not merged.
+Status: user-reported Colab regression and full-dataset numerical validation passed; master SHA256 and exact scaling references verified. Not merged.
 
 ## Scope
 Transform selected columns from the unscaled L3 master matrix. Never modify
@@ -78,4 +78,19 @@ User-run Colab generated **49,999 distinct tweet pairs**, using NumPy RNG seed 5
 
 **Decision:** Retain `bounded` with log1p and a configurable 95th-percentile reference as the *primary experimental candidate*. Retain `log_only` and `standard` as controlled alternatives. No final family weights are selected in M2; block weighting is deferred to M3.
 
-**Provenance limitations / review gate:** The full master CSV SHA256 and exact fitted per-feature scaling reference values were not included in the shared Colab output for this milestone. The L3 handover records an expected master SHA256 of `abb285f95c28a59bb35cbb797faabdcaac894f1c7d04885b4e7789dd3d88067c`, but it has not been reverified from this particular Colab run. Capture the actual hash, fitted references, and Git revision before final sign-off. The distance audit uses V1+N1+S3 and is not directly interchangeable with V1+N1+S2 results. No sentiment labels, K-means, or external evaluation were used.
+**Provenance limitations / review gate:** Master CSV SHA256, fitted references and checked-out Git revision were subsequently confirmed in L4-M2-PROV-01 below. The distance audit uses V1+N1+S3 and is not directly interchangeable with V1+N1+S2 results. No sentiment labels, K-means, or external evaluation were used.
+
+
+## L4-M2-PROV-01 — Source fingerprint and fitted references (2026-10-17)
+
+User-run Google Colab verification:
+- L3 master CSV SHA256: `abb285f95c28a59bb35cbb797faabdcaac894f1c7d04885b4e7789dd3d88067c` — **matches validated L3 handover fingerprint**.
+- Colab checked-out Git revision: `ac999ebfde6b3ab4b932c0fd082659d70705080f`. This is the implementation revision observed during validation, **not** the later documentation commit or necessarily the final PR head.
+- Scaling specification: `EngineeredFeatureScaler(variants=("V1","N1","S3"), spec=ScalingSpec(method="bounded", percentile=95))`.
+- Fitted transformed-count references:
+  - `N_negation_count`: `1.0986122886681096` = log1p(2).
+  - `S_exclamation_count`: `1.0986122886681096` = log1p(2).
+  - `S_emoji_count`: `1.791759469228055` = log1p(5).
+- These references are fit from the corpus; the emoji positive-value fallback is relevant because its overall 95th percentile is zero.
+- The values confirm the scaling parameters used in the 14,639-row validation; they are **not evidence of superior sentiment clustering**.
+- The user-reported regression suite passed **153/153 tests** before this documentation-only change. No code modifications in PROV-01.
