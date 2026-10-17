@@ -1,6 +1,6 @@
 # L4-M2 engineered-feature scaling — implementation candidate
 
-Status: methodology approved for audit and implementation; Colab validation pending.
+Status: user-reported Colab regression and numerical validation passed; provenance details pending final review. Not merged.
 
 ## Scope
 Transform selected columns from the unscaled L3 master matrix. Never modify
@@ -33,3 +33,49 @@ Run targeted and full regression suites in Colab. Validate on the actual
 14,639-row L3 master CSV, record feature distributions and fitted references,
 and compare label-blind squared-distance contributions with L4 scaling audits.
 Preserve dataset fingerprint and Git revision in validation evidence.
+
+
+## L4-M2-VAL-01 — Colab regression and full-corpus scaling (2026-10-17)
+
+**Validation evidence:** User-run Colab, Python 3.13.16, pytest 8.4.2.
+Targeted `tests/test_feature_scaling.py`: **11/11 passed (0.56 s)**.
+Full regression suite: **153/153 passed (5.55 s)**. No failures or errors.
+The following full-dataset figures were reported for the 14,639-row master matrix, using `V1 + N1 + S3` (five columns), rather than the default `V1 + N1 + S2`.
+
+### Distribution statistics (user-reported, rounded)
+
+| Method | Feature | Mean | Std | Median | P95 | Max | Zero % |
+|---|---|---:|---:|---:|---:|---:|---:|
+| bounded | V_compound | 0.1352 | 0.4738 | 0.1144 | 0.8313 | 0.9778 | 15.8686 |
+| bounded | N_negation_count | 0.2352 | 0.3412 | 0 | 1 | 1 | 66.4185 |
+| bounded | S_exclamation_count | 0.1668 | 0.3244 | 0 | 1 | 1 | 77.9630 |
+| bounded | S_uppercase_ratio | 0.0288 | 0.0770 | 0 | 0.1429 | 0.9565 | 73.2427 |
+| bounded | S_emoji_count | 0.0176 | 0.1013 | 0 | 0 | 1 | 96.6391 |
+| log_only | V_compound | 0.1352 | 0.4738 | 0.1144 | 0.8313 | 0.9778 | 15.8686 |
+| log_only | N_negation_count | 0.2607 | 0.3809 | 0 | 1.0986 | 1.6094 | 66.4185 |
+| log_only | S_exclamation_count | 0.1989 | 0.4064 | 0 | 1.0986 | 3.3322 | 77.9630 |
+| log_only | S_uppercase_ratio | 0.0288 | 0.0770 | 0 | 0.1429 | 0.9565 | 73.2427 |
+| log_only | S_emoji_count | 0.0324 | 0.1912 | 0 | 0 | 3.7136 | 96.6391 |
+| standard | V_compound | 0.1352 | 0.4738 | 0.1144 | 0.8313 | 0.9778 | 15.8686 |
+| standard | N_negation_count | 0 | 1 | -0.6844 | 2.1997 | 3.5407 | 0 |
+| standard | S_exclamation_count | 0 | 1 | -0.4894 | 2.2141 | 7.7105 | 0 |
+| standard | S_uppercase_ratio | 0.0288 | 0.0770 | 0 | 0.1429 | 0.9565 | 73.2427 |
+| standard | S_emoji_count | 0 | 1 | -0.1694 | -0.1694 | 19.2542 | 0 |
+
+The `Zero %` column measures exactly zero *after transformation*. Under standardization, original count zeros become negative standardized values; the underlying presence/absence of emojis or punctuation has not changed.
+
+### L4-M2-VAL-02 — Label-blind distance contribution audit
+
+User-run Colab generated **49,999 distinct tweet pairs**, using NumPy RNG seed 5001, with 50,000 candidate index pairs and equal-index pairs excluded. Contributions are the family share of **mean squared Euclidean distance**, calculated from `V1 + N1 + S3` engineered features only; TF-IDF is excluded.
+
+| Method | VADER distance / share | Negation distance / share | Structural distance / share |
+|---|---|---|---|
+| bounded | 0.4511 / 48.5138% | 0.2343 / 25.2026% | 0.2444 / 26.2836% |
+| log_only | 0.4511 / 38.8235% | 0.2921 / 25.1420% | 0.4187 / 36.0345% |
+| standard | 0.4511 / 6.9138% | 2.0133 / 30.8564% | 4.0603 / 62.2298% |
+
+**Interpretation:** VADER compound is unchanged across methods. Standardization substantially increases the distance contribution of sparse structural counts, while bounded scaling limits count maxima. The 95th percentile of transformed emoji counts is zero, motivating the audited positive-value fallback. None of these measurements establishes better sentiment clustering.
+
+**Decision:** Retain `bounded` with log1p and a configurable 95th-percentile reference as the *primary experimental candidate*. Retain `log_only` and `standard` as controlled alternatives. No final family weights are selected in M2; block weighting is deferred to M3.
+
+**Provenance limitations / review gate:** The full master CSV SHA256 and exact fitted per-feature scaling reference values were not included in the shared Colab output for this milestone. The L3 handover records an expected master SHA256 of `abb285f95c28a59bb35cbb797faabdcaac894f1c7d04885b4e7789dd3d88067c`, but it has not been reverified from this particular Colab run. Capture the actual hash, fitted references, and Git revision before final sign-off. The distance audit uses V1+N1+S3 and is not directly interchangeable with V1+N1+S2 results. No sentiment labels, K-means, or external evaluation were used.
