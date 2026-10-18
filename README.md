@@ -12,10 +12,10 @@ Modular Python pipeline for **unsupervised clustering of airline tweets by senti
 | L3 — Feature engineering | Complete: V / N / S | [Feature-engineering decisions](docs/feature_engineering_decisions.md) |
 | L3 — Master feature matrix | Complete: 14,639 tweets × 10 engineered features, plus `row_id` | [PR #22](https://github.com/frankie-chew-nus/sentiment-clustering-ml/pull/22) |
 | L4 — Vectorization, scaling and integration | **M1–M4 complete and merged** | [TF-IDF](docs/vectorization_decisions.md), [scaling](docs/feature_scaling_decisions.md), [weighting](docs/feature_integration_decisions.md), [FastText](docs/fasttext_decisions.md) |
-| L5 — Clustering and ablations | Pending | Label-blind clustering and controlled comparisons |
+| L5 — K=3 representation ablation | **Complete; frozen before external evaluation** | [L5 evidence and decisions](docs/l5_k3_ablation_decisions.md) |
 | L6 — External evaluation | Pending | Compare discovered clusters with held-out sentiment labels |
 
-**Latest user-verified regression result:** **179/179 tests passed** (L4-M4; Google Colab, 9.69 s). Tests establish implementation consistency, **not** superior sentiment clustering. L5 clustering and L6 label-based external evaluation have not yet been performed.
+**Latest user-verified regression result:** **179/179 tests passed** (L4-M4; Google Colab, 9.69 s). Tests establish implementation consistency, **not** superior sentiment clustering. L5 label-blind K=3 clustering has been performed (seven representations × five seeds); L6 label-based external evaluation has not yet been performed. The 179-test result refers to the earlier L4 regression suite, not new L5 code tests.
 
 ## Scope and generalization
 
@@ -82,7 +82,7 @@ Like L2's P0/P1/P2 variants and L3's V/N/S feature subsets, M1 defines **seven e
 
 **M1 conclusions:** P2 word vectors have ~42.0% fewer dimensions than P1 word vectors but more zero rows (71 vs 16). Character P0 has no zero rows, although its 50,000-feature vocabulary reaches the configured cap. Both combined configurations eliminate zero rows in this corpus; their mean row norm is approximately **1.4138**, consistent with two separately L2-normalized nonzero blocks. These findings support **P1 word + P0 character as a defensible M3 integration baseline**, not as a demonstrated winner for sentiment clustering.
 
-**M1 versus M3:** M1 generated all seven text representations. M3 used **one selected text combination**—`word_p1` + `char_p0`—then appended **V1 + N1 + S2** (four engineered columns) to produce 79,796-dimensional W0/W1/W2 matrices. W0, W1 and W2 are **three weighting configurations of the same underlying features**, not three new TF-IDF vectorizers. L5 will compare the word-only, character-only, combined-text and weighted-integrated baselines under a prespecified label-blind clustering protocol.
+**M1 versus M3:** M1 generated all seven text representations. M3 used **one selected text combination**—`word_p1` + `char_p0`—then appended **V1 + N1 + S2** (four engineered columns) to produce 79,796-dimensional W0/W1/W2 matrices. W0, W1 and W2 are **three weighting configurations of the same underlying features**, not three new TF-IDF vectorizers. L5 compared word-only, character-only, combined-text and weighted-integrated baselines using a fixed K=3 label-blind clustering protocol. See [L5 findings](docs/l5_k3_ablation_decisions.md).
 
 ### Validated initial L5 inputs
 
@@ -148,7 +148,7 @@ The calibrated coefficient for block `b` is `sqrt(target_share_b / original_mean
 | Negation | 1.000000 | 0.926749 | 0.655311 |
 | Structural | 1.000000 | 0.948425 | 0.670638 |
 
-**M3 output:** `L4-W0.npz`, `L4-W1.npz`, and `L4-W2.npz` are three distinct **14,639 × 79,796** sparse matrices, each with **3,728,386** stored nonzero entries and a paired JSON manifest. They passed the recorded export, SHA256 and numerical checks. **W0 is the baseline; W1 and W2 are controlled L5 alternatives**, not winners. See [M2 decisions](docs/feature_scaling_decisions.md) and [M3 decisions](docs/feature_integration_decisions.md) for complete audits.
+**M3 output:** `L4-W0.npz`, `L4-W1.npz`, and `L4-W2.npz` are three distinct **14,639 × 79,796** sparse matrices, each with **3,728,386** stored nonzero entries and a paired JSON manifest. They passed the recorded export, SHA256 and numerical checks. **W0 was the direct-concatenation baseline; W1 and W2 were controlled L5 alternatives.** W1 had the strongest observed internal K=3 metrics, but label-blind interpretation showed strong negation/exclamation-based partitioning; no sentiment-recovery winner has been established. See [M2 decisions](docs/feature_scaling_decisions.md) and [M3 decisions](docs/feature_integration_decisions.md) for complete audits.
 
 **M4 FastText:** Corpus-trained P1 skip-gram, 100 dimensions, window=5, `min_count=2`, 10 epochs, seed=5001, single worker, character n-grams 3–6; IDF-weighted mean pooling followed by L2 normalization. Full-corpus validation: **8,814 explicit vocabulary tokens**, **94.1682% token-occurrence coverage**, **0 zero tweet vectors**, and **29.45 s training plus encoding** in the reported Colab run. Opposing-polarity words can have high cosine similarity (e.g. excellent/terrible **0.8139**); pretrained FastText remains deferred.
 
@@ -179,6 +179,7 @@ The separately provided `L4_Vectorization_Normalization_Demo.ipynb` is **not ass
 | `docs/feature_scaling_decisions.md` | L4-M2 scaling audit and fitted references |
 | `docs/feature_integration_decisions.md` | L4-M3 weighting coefficients and artifact verification |
 | `docs/fasttext_decisions.md` | L4-M4 FastText feasibility and export verification |
+| `docs/l5_k3_ablation_decisions.md` | Frozen L5 K=3 ablation, stability, weighting comparison, interpretation and next-stage recommendations |
 | `notebooks/` | Demonstrations and user-approved notebook artifacts; consult folder for current versions |
 
 ## Install and test
@@ -271,6 +272,25 @@ The executed L3 demonstration notebook is maintained in the repository by the pr
 
 Detailed audit findings, test corrections and evidence are maintained in `docs/`. The user reviews each PR, adds supporting evidence and merges manually.
 
+## L5 — Fixed K=3 representation ablation (completed)
+
+L5 fitted K-means on **14,639 tweets** for all seven L4 representations (E0–E6), using **K=3**, five seeds (5001–5005), `k-means++`, and `n_init=10`. No sentiment labels or confidence fields were used. This is an **unsupervised representation comparison**, not a demonstration of recovered sentiment classes.
+
+### Why the results matter
+
+- **Text-only E0/E1/E2:** sampled silhouette about 0.003–0.005, often with a single dominant cluster. Combining word and character TF-IDF did not by itself create strong K=3 separation.
+- **E3/W0:** adding four engineered columns (VADER compound, negation count, exclamation count, uppercase ratio) improved sampled silhouette to **0.0507**, with five-seed partition stability ARI **1.0**.
+- **E4/W1:** equal calibrated block-distance contribution produced the strongest observed internal scores: silhouette **0.2273**, Davies–Bouldin **1.6110** (lower is better), Calinski–Harabasz **3821.20** (higher is better), seed ARI **1.0**.
+- **E5/W2:** 70% text-priority weighting yielded silhouette **0.1093**, but the partition was almost identical to W1: **14,637 of 14,639 tweets agreed** after optimal cluster-ID alignment (ARI **0.999714**).
+- **W0 versus W1/W2:** only about **64.4%** aligned assignment agreement, demonstrating that weighting materially changes the clustering partition.
+- **Interpretation:** W1 Cluster 0 had negation in **100%** of tweets; Cluster 1 had neither negation nor exclamation in **100%**; Cluster 2 had exclamation in **100%**. Sampled tweet content included mixed favourable and unfavourable language within these clusters.
+
+**Key caution:** Silhouette/DBI/CH measure geometry within each representation's own weighted feature space. They are not directly interchangeable measures of sentiment quality; inertia must not be ranked across differently scaled representations. Seed ARI measures reproducibility of cluster assignments, not agreement with sentiment labels.
+
+**Carry-forward representation plan:** E4/W1 primary, E5/W2 weighting sensitivity, E2 text-only control, E6/FastText optional semantic control; E3/W0 retained as the direct-concatenation ablation reference. These are **label-blind recommendations**, not externally validated rankings.
+
+For exact configurations, evidence tables, cluster profiles, limitations, and the L5 freeze boundary, read [the L5 decision log](docs/l5_k3_ablation_decisions.md). The Colab/Drive `L5-KMeans/output/` artifacts remain outside GitHub; this repository log documents reported results and does not itself contain all raw assignments or plot binaries.
+
 ## Next steps
 
-**L4-M1–M4 are complete.** Begin L5 with a label-blind clustering methodology and feasibility review, not automatic K-means execution. Prespecify K range, algorithm (KMeans versus MiniBatchKMeans), random seeds, stability protocol, internal metrics and the seven-representation ablation plan. Compare inertia only within compatible feature spaces; do not use sentiment labels or confidence fields for selection. L6 is reserved for external label-based evaluation. L4-M5 was proposed as a handover task but has **not** been separately implemented or validated. PR #29 was a closed, **unmerged** revert proposal and must not be treated as undoing M3.
+The L5 K=3 representation decisions are **frozen before external sentiment evaluation**. The next independent workstream may calculate label-based ARI, NMI and purity on the fixed K=3 assignments. K=2–8 sensitivity and further model/algorithm exploration are **deferred** and must not retroactively change the L5 label-blind conclusions. L4-M5 was proposed as a handover task but has **not** been separately implemented or validated. PR #29 was a closed, **unmerged** revert proposal and must not be treated as undoing M3.
