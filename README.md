@@ -64,6 +64,26 @@ L4 implemented label-blind text vectorization, engineered-feature scaling, block
 | **M3 — Integration** | `feature_integration.py` | W0/W1/W2 label-blind calibrated sparse matrices; [decision log](docs/feature_integration_decisions.md) |
 | **M4 — FastText** | `fasttext_representation.py` | Optional corpus-trained 100-dimensional vectors; [decision log](docs/fasttext_decisions.md) |
 
+### M1 — TF-IDF configurations and decisions
+
+Like L2's P0/P1/P2 variants and L3's V/N/S feature subsets, M1 defines **seven explicit representation configurations**. Every row below was implemented and numerically validated on the same 14,639 tweets. Word uses token 1–2 grams; `char` and `char_wb` use character 3–5 grams. A combined configuration concatenates two independently L2-normalized blocks; it does **not** apply M3 weighting.
+
+| M1 ID | Input and analyzer | Vocabulary dimensions | Nonzero entries | Zero rows | Role / interpretation |
+|---|---|---:|---:|---:|---|
+| `word_p1` | P1 · word TF-IDF | 29,792 | 371,747 | 16 | **Primary word baseline**; greater lexical coverage than P2 |
+| `word_p2` | P2 · word TF-IDF | 17,267 | 173,532 | 71 | Controlled preprocessing alternative; smaller vocabulary, more zero rows |
+| `char_p0` | P0 · character TF-IDF | 50,000 | 3,332,264 | 0 | **Primary character baseline**; preserves P0 casing and punctuation |
+| `char_p1` | P1 · character TF-IDF | 50,000 | 3,455,072 | 0 | Controlled character-preprocessing alternative |
+| `char_wb_p0` | P0 · `char_wb` TF-IDF | 50,000 | 2,252,967 | 1 | Controlled word-boundary character alternative |
+| `combined_p1_p1` | P1 word + P1 character | 79,792 | 3,826,819 | 0 | Controlled same-preprocessing combined baseline |
+| `combined_p1_p0` | P1 word + P0 character | 79,792 | 3,704,011 | 0 | **Primary combined baseline**; input to M3 integration |
+
+**How to read the names:** `word_p1` means word TF-IDF fitted to P1 text; `char_p0` means character TF-IDF fitted to P0 text; `combined_p1_p0` means P1 word TF-IDF concatenated with P0 character TF-IDF. `char_wb` restricts character n-grams to word boundaries; it is a distinct analyzer, not a separate preprocessing level.
+
+**M1 conclusions:** P2 word vectors have ~42.0% fewer dimensions than P1 word vectors but more zero rows (71 vs 16). Character P0 has no zero rows, although its 50,000-feature vocabulary reaches the configured cap. Both combined configurations eliminate zero rows in this corpus; their mean row norm is approximately **1.4138**, consistent with two separately L2-normalized nonzero blocks. These findings support **P1 word + P0 character as a defensible M3 integration baseline**, not as a demonstrated winner for sentiment clustering.
+
+**M1 versus M3:** M1 generated all seven text representations. M3 used **one selected text combination**—`word_p1` + `char_p0`—then appended **V1 + N1 + S2** (four engineered columns) to produce 79,796-dimensional W0/W1/W2 matrices. W0, W1 and W2 are **three weighting configurations of the same underlying features**, not three new TF-IDF vectorizers. L5 will compare the word-only, character-only, combined-text and weighted-integrated baselines under a prespecified label-blind clustering protocol.
+
 ### Validated initial L5 inputs
 
 All rows correspond to **14,639 tweets**. Files shown below are the **read-only master copies** placed by the project owner in Google Drive; the `L4-` prefix was added after the original L4 exports were validated. Use the paired `.json` manifest for each `.npz` file.
