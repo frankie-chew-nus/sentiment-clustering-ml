@@ -87,6 +87,33 @@ Exploration of K=2-8 is intentionally deferred to subsequent clustering-model ex
 
 ## Evidence and reproducibility
 
-The Colab evidence archive records matrix fingerprints, configuration, five seeds, internal metrics, cluster assignments, stability outputs, cross-representation comparisons, interpretation tables, representative/random tweet samples, figures, and an `L5_K3_FREEZE_MANIFEST.json` generated before external evaluation.
+The Colab/Drive evidence workspace records matrix fingerprints, configuration, five seeds, internal metrics, cluster assignments, stability outputs, cross-representation comparisons, interpretation tables, representative/random tweet samples, figures, and an `L5_K3_FREEZE_MANIFEST.json` reported generated before external evaluation. These original binary/CSV artifacts are not committed to this repository; the results in this log were reviewed from shared notebook outputs and tables. The freeze manifest's complete contents and checksums have not been independently revalidated here.
 
 External sentiment evaluation is explicitly outside this frozen L5 record.
+
+## Evidence register and interpretation boundaries
+
+| Evidence | Location / source | Status |
+|---|---|---|
+| K=3 five-seed results, seed-pair ARI, assignments | Colab Drive `L5-KMeans/output/runs/` | User-reported saved outputs; numerical tables reviewed |
+| E3/E4/E5 cross-representation ARI, confusion matrices | Colab Drive `L5-KMeans/output/interpretation/` | Reported saved; values transcribed above |
+| E4 feature means, medians, prevalence and quantiles | Colab Drive `L5-KMeans/output/interpretation/` | Reported saved; tables reviewed |
+| E4 centroid-nearest tweets and fixed random sample (seed 5001) | Colab Drive `L5-KMeans/output/interpretation/` | Reviewed from pasted tables; some displayed tweet text truncated |
+| L5 master evidence CSV and freeze manifest | Colab Drive `L5-KMeans/output/interpretation/` | User confirmed saved; full raw files not independently audited in this repository |
+| L4 NPZ SHA256 checks | Colab execution output and L4 manifests | Reported matching; not independently rehashed by this documentation update |
+
+### Methodological qualifications
+
+- **Scope:** K=3 only. No K=2–8 search, algorithm comparison, or external label-based evaluation is claimed.
+- **Preprocessing comparison:** E0, E1 and E2 differ in analyzer and input preprocessing (P1 word versus P0 character); comparisons are not fully factorial isolation of every preprocessing choice.
+- **Feature attribution:** E2→E3 adds four engineered dimensions simultaneously; the contribution of each individual feature has not been separately ablated.
+- **Weighting:** W1/W2 differ in calibrated expected squared-distance shares; internal metrics are evaluated in different geometries. W1's higher scores do not establish better sentiment grouping.
+- **Stability:** five seeds with `n_init=10` test initialization robustness only; they do not establish out-of-sample stability.
+- **Row alignment:** sequential L3 row IDs and equal P0/L3/assignment row counts support positional alignment, but P0 has no explicit row ID and an independent per-row cross-artifact mapping was not established.
+- **Interpretation:** centroid-nearest and fixed-random tweets illustrate feature structure, not sentiment-class assignments. The random examples include opposing apparent sentiment within an exclamation-dominant cluster.
+- **Memory:** Python-traced peak memory is not equivalent to total Colab process RAM.
+- **Reproducibility:** the GitHub log is a traceable summary, not a substitute for the original saved output CSVs, NPZs, notebook and freeze manifest.
+
+### Documentation decision
+
+The representation recommendations above were frozen before accessing sentiment labels. No model code, L1–L4 master data, or experiment outputs were changed as part of this documentation update. External evaluation and K sensitivity are separate future workstreams.
