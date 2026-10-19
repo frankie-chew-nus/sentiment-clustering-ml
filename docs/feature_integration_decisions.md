@@ -27,6 +27,12 @@ and the sum of calibrated block distances is 1 on the fit corpus.
 A common multiplier would not affect relative shares.
 W0 preserves original M1/M2 magnitudes and has no imposed targets.
 
+## Why block weighting follows feature scaling
+
+M1 L2 normalization controls magnitudes **within each text representation**; M2 `log1p` and bounded scaling control distributions **within selected engineered features**. Neither step guarantees equal contributions from the five concatenated blocks to squared Euclidean distances. In the validated W0 direct-concatenation audit, word and character text together contributed about **81.31%** of expected squared distance.
+
+M3 therefore treats distance allocation as a distinct design choice: W0 preserves native post-scaling block magnitudes, W1 targets 20% per block, and W2 targets 70% combined text / 30% combined engineered contributions. These targets are achieved on the calibration corpus, but are not feature-importance estimates or evidence of improved sentiment-label agreement. The frozen L5 results must not be interpreted as proving that W1 is sentiment-optimal. See [M1 decisions](vectorization_decisions.md) and [M2 rationale](feature_scaling_decisions.md).
+
 ## Alignment and leakage
 - Block names are explicitly whitelisted: word, char, V, N, S.
 - Labels/confidence/row_id are not accepted as named blocks.
