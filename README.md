@@ -13,9 +13,9 @@ Modular Python pipeline for **unsupervised clustering of airline tweets by senti
 | L3 — Master feature matrix | Complete: 14,639 tweets × 10 engineered features, plus `row_id` | [PR #22](https://github.com/frankie-chew-nus/sentiment-clustering-ml/pull/22) |
 | L4 — Vectorization, scaling and integration | **M1–M4 complete and merged** | [TF-IDF](docs/vectorization_decisions.md), [scaling](docs/feature_scaling_decisions.md), [weighting](docs/feature_integration_decisions.md), [FastText](docs/fasttext_decisions.md) |
 | L5 — K=3 representation ablation | **Complete; frozen before external evaluation** | [L5 evidence and decisions](docs/l5_k3_ablation_decisions.md) |
-| L6 — External evaluation | Pending | Compare discovered clusters with held-out sentiment labels |
+| L6 — Standalone K=3 external evaluation | **Complete: E0–E7 executed** | [L6 notebooks and findings](notebooks/L6/README.md) · [PR #36](https://github.com/frankie-chew-nus/sentiment-clustering-ml/pull/36) |
 
-**Latest user-verified regression result:** **179/179 tests passed** (L4-M4; Google Colab, 9.69 s). Tests establish implementation consistency, **not** superior sentiment clustering. L5 label-blind K=3 clustering has been performed (seven representations × five seeds); L6 label-based external evaluation has not yet been performed. The 179-test result refers to the earlier L4 regression suite, not new L5 code tests.
+**Latest user-verified regression result:** **179/179 tests passed** (L4-M4; Google Colab, 9.69 s). Tests establish implementation consistency, **not** superior sentiment clustering. L5 label-blind K=3 clustering has been performed (seven representations × five seeds); L6 has evaluated eight standalone K=3 representations (E0–E7) against original sentiment annotations after label-blind clustering. The 179-test result refers to the earlier L4 regression suite, not new L5 code tests.
 
 ## Scope and generalization
 
@@ -305,6 +305,29 @@ L5 fitted K-means on **14,639 tweets** for all seven L4 representations (E0–E6
 
 For exact configurations, evidence tables, cluster profiles, limitations, and the L5 freeze boundary, read [the L5 decision log](docs/l5_k3_ablation_decisions.md). The Colab/Drive `L5-KMeans/output/` artifacts remain outside GitHub; this repository log documents reported results and does not itself contain all raw assignments or plot binaries.
 
+## L6 — Standalone external evaluation (E0–E7)
+
+Eight standalone Colab experiments independently regenerated representations from redacted tweet text using the reusable repository modules, clustered the same **14,639 tweets** at **K=3** (seed 5001), and accessed original sentiment annotations only after clustering and row-alignment checks. E0–E6 reused the frozen representation *definitions*, not L1–L5 generated matrices or assignments. E7 was a new, label-informed exploratory configuration.
+
+| Experiment | External ARI ↑ | NMI ↑ | Macro F1 ↑ | Silhouette ↑ |
+|---|---:|---:|---:|---:|
+| E0 — word TF-IDF | **0.1277** | 0.0970 | 0.3825 | 0.0047 |
+| E1 — character TF-IDF | 0.0656 | 0.1084 | 0.4097 | 0.0034 |
+| E2 — combined word + character TF-IDF | 0.0120 | 0.0551 | 0.3334 | 0.0024 |
+| E3 — text + engineered features, direct weighting | 0.0435 | **0.1262** | 0.4448 | 0.0507 |
+| E4 — equal calibrated feature-block weighting | 0.0521 | 0.0957 | 0.4795 | **0.2273** |
+| E5 — text-priority calibrated weighting | 0.0522 | 0.0958 | **0.4797** | 0.1093 |
+| E6 — FastText embeddings | 0.0954 | 0.0968 | 0.4555 | 0.0795 |
+| E7 — exploratory sentiment-focused hybrid | 0.0303 | 0.1207 | 0.4343 | 0.0694 |
+
+**Main findings:** E0 had the strongest external ARI and optimally mapped accuracy (65.07%), while E4 had the highest internal silhouette. E5 narrowly led on Macro F1, but was practically tied with E4. E3 led on NMI, and E6 had the highest purity. No representation cleanly recovered all three sentiment classes. **Better-separated clusters did not necessarily match human sentiment annotations more closely.**
+
+**E7 hypothesis and trade-off:** After E0–E6, we emphasized word TF-IDF (70% expected squared-distance contribution), retained character TF-IDF (10%), added VADER polarity scores (15%), limited negation (5%) and excluded structural expression features. Compared with E4, E7 improved NMI (0.1207 vs 0.0957) and positive recall (~89.5% vs ~50.7%), but reduced ARI, Macro F1 (0.4343 vs 0.4795), mapped accuracy and neutral recovery. **E7 was not an overall improvement.**
+
+These results describe clustering on the same annotated corpus, **not** predictive performance on unseen tweets. E7 is explicitly label-informed exploratory development, so these annotations cannot provide untouched independent confirmation of E7. Silhouette measures geometric separation within each representation, not sentiment accuracy.
+
+For full metric tables, configurations, interpretation and limitations, see the [L6 experiment README](notebooks/L6/README.md) and [E0–E7 notebooks](notebooks/L6/). L6 assembles existing modular functions into experiments; it does not add reusable pipeline functions.
+
 ## Next steps
 
-The L5 K=3 representation decisions are **frozen before external sentiment evaluation**. The next independent workstream may calculate label-based ARI, NMI and purity on the fixed K=3 assignments. K=2–8 sensitivity and further model/algorithm exploration are **deferred** and must not retroactively change the L5 label-blind conclusions. L4-M5 was proposed as a handover task but has **not** been separately implemented or validated. PR #29 was a closed, **unmerged** revert proposal and must not be treated as undoing M3.
+The L5 label-blind K=3 decisions remain frozen and distinct from the completed L6 external evaluation. Any future K=2–8 sensitivity, new clustering algorithms or label-informed tuning should be approved and documented as separate exploratory workstreams. A new independent labelled evaluation source would be needed for confirmatory claims after model selection. L4-M5 was proposed as a handover task but has not been separately implemented or validated. PR #29 was a closed, **unmerged** revert proposal and must not be treated as undoing M3.
