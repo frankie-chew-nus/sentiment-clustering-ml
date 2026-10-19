@@ -1,6 +1,6 @@
 # MSI5001 — L6 Standalone Clustering Experiments (E0–E7)
 
-**Purpose:** Document the independent L6 experiment notebooks, their design choices, measured results, and interpretation. This README belongs **beside the notebooks**, not in the GitHub repository's main README. It is an experiment record, not reusable library documentation.
+**Purpose:** Document the independent L6 experiment notebooks, their design choices, measured results, and interpretation. This README belongs **beside the notebooks** in `notebooks/L6/`, not in the repository's root README. It documents experiments rather than reusable library functions.
 
 **Status:** E0–E7 executed; E4 was rerun after correcting E3-prefixed output filenames. The figures below are taken from the supplied executed notebooks and should be checked against the saved evidence artifacts before formal publication.
 
@@ -104,23 +104,21 @@ If future work uses the observed sentiment labels to select or tune new represen
 
 ## 9. Notebook-folder organization and evidence
 
-Keep this file next to the notebooks, for example:
+The experiment documentation and eight notebooks were merged into GitHub through [PR #36](https://github.com/frankie-chew-nus/sentiment-clustering-ml/pull/36):
 
 ```text
-L6-External-Evaluation/
-  notebooks/
-    README.md                      # This file
-    L6_E0_Word_TFIDF_Standalone.ipynb
-    L6_E1_Character_TFIDF_Standalone.ipynb
-    L6_E2_Combined_TFIDF_Standalone.ipynb
-    L6_E3_W0_Standalone.ipynb
-    L6_E4_W1_Standalone.ipynb      # Corrected and rerun version
-    L6_E5_W2_Standalone.ipynb
-    L6_E6_FastText_Standalone.ipynb
-    L6_E7_Exploratory_Hybrid_Standalone.ipynb
-    L6_E0_E7_Consolidated_Analysis.ipynb
+notebooks/L6/
+  README.md
+  L6_E0_Word_TFIDF_Standalone.ipynb
+  L6_E1_Character_TFIDF_Standalone.ipynb
+  L6_E2_Combined_TFIDF_Standalone.ipynb
+  L6_E3_W0_Standalone.ipynb
+  L6_E4_W1_Standalone.ipynb
+  L6_E5_W2_Standalone.ipynb
+  L6_E6_FastText_Standalone.ipynb
+  L6_E7_Exploratory_Hybrid_Standalone.ipynb
 ```
 
-The actual notebook output directories contain saved JSON metrics, assignment files, figures and provenance checks. Preserve them as the authoritative numerical evidence. This README is an accessible interpretation of those outputs, **not a substitute for the notebook evidence**.
+The consolidated E0–E7 analysis notebook was prepared separately but **was not included in PR #36**. The committed E0–E7 notebooks have their execution outputs cleared; the user-run notebooks and Google Drive experiment output directories retain the executed results, JSON metrics, assignments, figures and provenance evidence. Preserve those external artifacts as the numerical evidence: this README is an interpretation, not a replacement for saved experiment outputs.
 
-**Repository policy:** This L6 README and the experiment notebooks are deliberately kept outside the GitHub repository; the GitHub codebase is reused as a library but is not modified by these experiments.
+**Repository scope:** L6 uses the existing modular Python code as a library, but does not introduce new reusable pipeline modules. The root README links to this experiment record and gives only a brief project-level findings summary.
