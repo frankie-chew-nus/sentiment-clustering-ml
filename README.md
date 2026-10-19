@@ -102,6 +102,20 @@ Other M1 configurations (word P2, character P1, character-word-boundary P0, and 
 
 **M1 settings:** P1 word TF-IDF uses 1–2 grams (up to 30,000 features); P0 character TF-IDF uses 3–5 grams (up to 50,000). Both use `min_df=2`, `max_df=0.95`, sublinear TF, IDF and per-block L2 normalization. Concatenated text blocks are not automatically renormalized.
 
+### Why different feature types use different scaling methods
+
+The L4 pipeline uses **feature-specific transformations**, rather than applying one global standardizer. The inputs have different distributions and interpretations; this design aims to preserve meaningful signals while controlling their effects on Euclidean distance.
+
+| Feature type | Applied treatment | Rationale |
+|---|---|---|
+| Word/character TF-IDF | L2-normalize each nonzero text block independently | Control vector magnitude while retaining relative term-pattern weights; no final concatenated-row renormalization. |
+| VADER compound | Keep native signed score (-1 to +1) | Preserve the polarity scale and zero reference point. |
+| Negation and exclamation counts | `log1p`, then divide by a fitted 95th-percentile reference and clip to [0, 1] | Compress skewed counts, preserve zeros, and limit the influence of unusually large counts. |
+| Uppercase ratio | Keep native bounded ratio | Avoid unnecessary rescaling of an already bounded feature. |
+| Combined word, character, VADER, negation, structural blocks | Apply W0/W1/W2 block coefficients after individual transformations | Calibrate expected squared-distance contributions; feature-wise scaling alone does not balance blocks. |
+
+The frozen L5 W0/W1/W2 matrices use **bounded** count scaling, not the available `standard` (log1p then z-score) alternative. In the L4-M2 label-blind audit of **V1+N1+S3** engineered features (including emoji, unlike L5's V1+N1+S2), structural distance share was **26.28%** with bounded scaling versus **62.23%** with standardization. This is evidence of different distance geometry, **not proof** that bounded scaling better recovers sentiment. W1/W2 shares are likewise calibrated distance allocations, not accuracy or learned importance. See [scaling rationale](docs/feature_scaling_decisions.md), [TF-IDF decisions](docs/vectorization_decisions.md), and [block weighting](docs/feature_integration_decisions.md).
+
 ### M2 — Engineered-feature scaling configurations
 
 M2 implemented and tested **three scaling methods** for nonnegative count features. All methods retain the native VADER polarity values and uppercase ratio without additional scaling. The same validated L3 master matrix (14,639 rows) was used.

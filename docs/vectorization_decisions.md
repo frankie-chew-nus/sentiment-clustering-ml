@@ -18,6 +18,12 @@ Status: L4-M1 user-validated in Colab (142/142 regression tests) and exported ma
   respective casing decisions; P0 character case must be preserved.
 - No combined-vector renormalization or relative weighting in M1. These are M3 responsibilities.
 
+## Why L2 normalization for sparse TF-IDF?
+
+Word and character TF-IDF encode many term-pattern weights in sparse vectors. Per-row L2 normalization makes each **nonzero** text vector unit-length, limiting variation in magnitude associated with tweet length while retaining the relative pattern weights within that vector. Zero vectors remain zero. This is a methodological rationale for the configured `norm='l2'`, not evidence that it outperforms alternative normalization methods on sentiment recovery.
+
+Feature-wise mean-centering and z-scoring would answer a different question: they would alter term-level weighting and mean-centering would generally destroy sparse storage efficiency. M1 therefore independently L2-normalizes the word and character blocks, concatenates them without another row normalization, and leaves cross-block distance allocation to M3. See [M2 scaling](feature_scaling_decisions.md) and [M3 weighting](feature_integration_decisions.md).
+
 ## Invariants and limitations
 - Strict positional alignment of P0/P1/P2 by row_id must be verified at ingestion.
 - Label and confidence columns are forbidden inputs; row_id is metadata only.

@@ -20,6 +20,17 @@ No sentiment labels, K-means, block weighting or clustering outcomes.
 - All fitted references are saved as metadata; downstream transforms reuse
   the same references without refitting.
 
+## Rationale for feature-specific scaling
+
+This section makes explicit the design logic underlying the implemented L4-M2 choices; it does not introduce a new experiment or retroactively establish an optimal method.
+
+- **Already bounded signals:** VADER polarity and uppercase ratio are retained in their native scales. For VADER compound, keeping the signed scale also preserves zero as the neutral reference. This interpretability argument is methodological reasoning, not an independently measured clustering advantage.
+- **Sparse, skewed counts:** Negation, exclamation and optional emoji counts have many zeros and a small number of larger observations. `log1p(0)=0` retains absence; `log1p` compresses large counts. Dividing by a fitted 95th-percentile reference and clipping to [0,1] bounds their subsequent magnitude. The positive-only percentile fallback addresses zero overall percentiles, but may magnify rare positives before clipping.
+- **Why not z-score all counts by default?** The implemented `standard` alternative applies population z-scores *after* `log1p`, and can make rare nonzero observations numerically large; original zeros also become negative standardized values. In the **V1+N1+S3 engineered-only** distance audit, structural contribution was 62.2298% under `standard`, compared with 26.2836% under `bounded`. This motivated retaining bounded scaling as the primary candidate, not declaring it superior for sentiment recovery.
+- **Separate integration step:** Individual feature scaling does not equalize contributions from word TF-IDF, character TF-IDF, VADER, negation and structural blocks. M3 calibrates those contributions through W0/W1/W2; it does not replace M2 transformations. See [M1 vectorization](vectorization_decisions.md) and [M3 integration](feature_integration_decisions.md).
+
+**Evidence boundary:** The L4-M2 audit used V1+N1+S3 (including emoji), whereas the frozen L5 W0/W1/W2 matrices used V1+N1+S2 (without emoji). The audit demonstrates sensitivity of distance geometry to scaling, not a controlled L5 comparison of scaling methods. No label-based optimization or new experiment is claimed here.
+
 ## Interpretation and limitations
 - Bounded scaling is not proven superior to alternatives for sentiment clustering.
 - The positive-value percentile fallback avoids zero references for zero-inflated
