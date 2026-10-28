@@ -13,7 +13,7 @@ Modular Python pipeline for **unsupervised clustering of airline tweets by senti
 | L3 — Master feature matrix | Complete: 14,639 tweets × 10 engineered features, plus `row_id` | [PR #22](https://github.com/frankie-chew-nus/sentiment-clustering-ml/pull/22) |
 | L4 — Vectorization, scaling and integration | **M1–M4 complete and merged** | [TF-IDF](docs/vectorization_decisions.md), [scaling](docs/feature_scaling_decisions.md), [weighting](docs/feature_integration_decisions.md), [FastText](docs/fasttext_decisions.md) |
 | L5 — K=3 representation ablation | **Complete; frozen before external evaluation** | [L5 evidence and decisions](docs/l5_k3_ablation_decisions.md) |
-| L6 — Standalone K=3 external evaluation | **Complete: E0–E7 executed** | [L6 notebooks and findings](notebooks/L6/README.md) · [PR #36](https://github.com/frankie-chew-nus/sentiment-clustering-ml/pull/36) |
+| L6 — Standalone K=3 external evaluation | **Complete: E0–E7 executed** | [L6 notebooks and findings](notebooks/data exploration/README.md) · [PR #36](https://github.com/frankie-chew-nus/sentiment-clustering-ml/pull/36) |
 
 **Latest user-verified regression result:** **179/179 tests passed** (L4-M4; Google Colab, 9.69 s). Tests establish implementation consistency, **not** superior sentiment clustering. L5 label-blind K=3 clustering has been performed (seven representations × five seeds); L6 has evaluated eight standalone K=3 representations (E0–E7) against original sentiment annotations after label-blind clustering. The 179-test result refers to the earlier L4 regression suite, not new L5 code tests.
 
@@ -326,7 +326,7 @@ Eight standalone Colab experiments independently regenerated representations fro
 
 These results describe clustering on the same annotated corpus, **not** predictive performance on unseen tweets. E7 is explicitly label-informed exploratory development, so these annotations cannot provide untouched independent confirmation of E7. Silhouette measures geometric separation within each representation, not sentiment accuracy.
 
-For full metric tables, configurations, interpretation and limitations, see the [L6 experiment README](notebooks/L6/README.md) and [E0–E7 notebooks](notebooks/L6/). L6 assembles existing modular functions into experiments; it does not add reusable pipeline functions.
+For full metric tables, configurations, interpretation and limitations, see the [L6 experiment README](notebooks/data exploration/README.md) and [E0–E7 notebooks](notebooks/data exploration/). L6 assembles existing modular functions into experiments; it does not add reusable pipeline functions.
 
 ## Next steps
 
