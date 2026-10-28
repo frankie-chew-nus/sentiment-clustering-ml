@@ -1,6 +1,6 @@
 # MSI5001 — L6 Standalone Clustering Experiments (E0–E7)
 
-**Purpose:** Document the independent L6 experiment notebooks, their design choices, measured results, and interpretation. This README belongs **beside the notebooks** in `notebooks/L6/`, not in the repository's root README. It documents experiments rather than reusable library functions.
+**Purpose:** Document the independent L6 experiment notebooks, their design choices, measured results, and interpretation. This README belongs **beside the notebooks** in `notebooks/data exploration/`, not in the repository's root README. It documents experiments rather than reusable library functions.
 
 **Status:** E0–E7 executed; E4 was rerun after correcting E3-prefixed output filenames. The figures below are taken from the supplied executed notebooks and should be checked against the saved evidence artifacts before formal publication.
 
@@ -107,7 +107,7 @@ If future work uses the observed sentiment labels to select or tune new represen
 The experiment documentation and eight notebooks were merged into GitHub through [PR #36](https://github.com/frankie-chew-nus/sentiment-clustering-ml/pull/36):
 
 ```text
-notebooks/L6/
+notebooks/data exploration/
   README.md
   L6_E0_Word_TFIDF_Standalone.ipynb
   L6_E1_Character_TFIDF_Standalone.ipynb
