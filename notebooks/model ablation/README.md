@@ -95,7 +95,57 @@ This does **not** establish that foundation-model embeddings inherently outperfo
 
 E19's reported recall was approximately **95.45% negative**, **23.14% neutral** and **90.09% positive**. Despite strong overall accuracy, the model missed most neutral tweets. Class-level metrics therefore remain essential.
 
-## 6. Research conclusion
+
+## 6. Prompt refinement follow-up: E19–E23
+
+After the first E19 evaluation, prompt iterations investigated why the model missed many human-labelled neutral tweets. These are **exploratory, label-informed prompt experiments**: results on this corpus were inspected to motivate later prompts, so they are not independent confirmation of generalization.
+
+| Experiment | Prompt strategy | Direct accuracy ↑ | Macro F1 ↑ | Neutral recall |
+|---|---|---:|---:|---:|
+| E19 | Original, minimal three-label instruction | 79.27% | 0.6697 | 23.14% |
+| E20 | Explicit sentiment definitions and neutral boundaries | 82.30% | 0.7529 | 47.18% |
+| E21 | Two-stage neutral-vs-opinionated, then polarity | 76.17% | 0.6829 | 48.85% |
+| E22 | Neutral-boundary refinement: operational issues and politeness are not sentiment by themselves | 81.99% | 0.7533 | 50.66% |
+| E23 | Context-aware question interpretation; punctuation is not sentiment by itself | 82.30% | **0.7603** | **52.92%** |
+
+These follow-ups use the same Qwen2.5-3B-Instruct model and deterministic zero-shot classification. They differ in prompting/decision strategy, not model size or supervised fine-tuning. Values are from the previously reviewed executed notebooks; retain the corresponding metrics/manifests as the evidence source.
+
+### Main prompt findings
+
+1. **The original prompt under-specified class definitions.** E19 had strong negative and positive recall, but neutral recall of only 23.14%. The model appeared reluctant to predict neutral.
+2. **Explicit class definitions helped substantially.** E20 raised Macro F1 from 0.6697 to 0.7529 and neutral recall from 23.14% to 47.18%, without changing the foundation model.
+3. **A two-stage design was not the best trade-off.** E21 improved neutral recall compared with E19 but had the lowest overall accuracy and weak neutral precision; the first-stage neutral decision was difficult to correct later.
+4. **Additional neutral-boundary rules gave only a small overall change.** E22 slightly exceeded E20 on Macro F1 (0.7533 vs 0.7529), but was a near tie on aggregate performance.
+5. **Context-aware question instructions produced the strongest aggregate balance.** E23 achieved the highest recorded Macro F1 (0.7603), ARI (0.5873) and NMI (0.4347), while matching E20's rounded accuracy (82.30%). E23's neutral recall rose to 52.92%, but it still missed 1,459 of the 3,099 human-labelled neutral tweets.
+
+### E23 per-class results
+
+| Sentiment | Precision | Recall | F1 |
+|---|---:|---:|---:|
+| Negative | 90.15% | 90.43% | 0.9029 |
+| Neutral | 68.30% | 52.92% | 0.5964 |
+| Positive | 69.55% | 89.25% | 0.7818 |
+
+E23's remaining neutral misclassifications were split between negative (818) and positive (641) predictions. This suggests the residual problem is not solely a one-directional negative bias.
+
+### Error-analysis hypotheses
+
+Inspection of E20 errors found associations between neutral tweets misclassified as negative and terms/signals such as negation, cancellation and requests for help; neutral tweets misclassified as positive more often contained exclamation marks, gratitude and positive vocabulary. These are **descriptive associations, not causal explanations**. Correctly classified neutral tweets also often contained question marks, so punctuation alone did not explain the errors.
+
+E23 therefore instructed Qwen to judge questions by meaning, intent and full context:
+- factual information requests without an expressed attitude should be neutral;
+- rhetorical questions that express criticism or frustration should be negative;
+- questions that genuinely express praise should be positive;
+- a question mark alone should not determine sentiment.
+
+This targeted prompt was associated with improved results, but because it was developed after examining labelled errors on the same corpus, the result remains exploratory. A separate development set and untouched test set—or new independently annotated tweets—are needed for confirmatory claims.
+
+### Current recommendation
+
+**E23 is the leading exploratory prompt configuration so far**, based on Macro F1 and neutral recall. E20 remains a reasonable simpler alternative: it achieves the same rounded accuracy and is marginally below E23 on Macro F1. There is no evidence here that the small E20/E22/E23 aggregate differences are statistically significant. Retain the original E19 baseline and all prompt versions for transparency.
+
+
+## 7. Research conclusion
 
 > **There is no demonstrated one-size-fits-all text preparation, feature representation or clustering configuration for this corpus.** Increasing representation sophistication alone did not consistently improve unsupervised sentiment recovery. Results depended on the interaction among preprocessing, representation, dimensionality reduction, clustering method and evaluation objective.
 >
@@ -103,7 +153,7 @@ E19's reported recall was approximately **95.45% negative**, **23.14% neutral** 
 
 The showcase traces representative NLP approaches from statistical features through word embeddings and contextual Transformers to an instruction-following foundation model. It is **not** a controlled historical study proving that advances over time caused particular score changes.
 
-## 7. Limitations and reproducibility
+## 8. Limitations and reproducibility
 
 1. **Single corpus:** Findings are specific to the 14,639 airline tweets and tested configurations; they do not establish general performance on other domains.
 2. **Exploratory comparisons:** Prior E0–E13 results informed subsequent choices. The original annotations are not an untouched independent test set for every later design decision.
@@ -113,7 +163,7 @@ The showcase traces representative NLP approaches from statistical features thro
 6. **Reproducibility:** Preserve source CSV fingerprints, row order, model versions, configurations, cluster assignments or frozen predictions, metrics JSON, manifests and figures. Qwen's saved E19 predictions were originally generated under Transformers **4.51.3** and later reused for evaluation in an environment with Transformers **4.57.6**; this does not prove fresh inference would be identical.
 7. **Data protection:** Do not commit original sentiment labels, tweet-level checkpoint outputs or secret credentials to GitHub. The redacted input data and evidence artifacts should remain in their designated storage locations.
 
-## 8. Repository organization
+## 9. Repository organization
 
 The reusable preprocessing and feature-building modules live in the repository's source code. These notebooks are **experiment assemblies**, not new reusable library functions.
 
