@@ -92,3 +92,8 @@ P0/P1/P2 were designed as modular cleaning options for statistical NLP and featu
 - **Privacy:** Do not commit original labelled data, secrets or tweet-level prediction checkpoints to the public repository.
 
 **Recommendation:** Keep **E23 RAW** as the preferred overall configuration for now. Treat **E24 P0** as a candidate when neutral F1 is specifically prioritized, and avoid E26 P2 for this tested setup unless a component ablation reveals a useful subset of its operations.
+
+
+## Repository navigation
+
+The canonical E0–E7 notebooks are maintained in [`../data exploration/`](../data%20exploration/README.md); the [model-ablation README](../model%20ablation/README.md) documents E12–E23. This folder contains the E24–E26 preprocessing comparison only. Saved results remain exploratory until independently confirmed on untouched labelled data.
