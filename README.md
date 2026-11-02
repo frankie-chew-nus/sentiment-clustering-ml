@@ -13,7 +13,9 @@ Modular Python pipeline for **unsupervised clustering of airline tweets by senti
 | L3 — Master feature matrix | Complete: 14,639 tweets × 10 engineered features, plus `row_id` | [PR #22](https://github.com/frankie-chew-nus/sentiment-clustering-ml/pull/22) |
 | L4 — Vectorization, scaling and integration | **M1–M4 complete and merged** | [TF-IDF](docs/vectorization_decisions.md), [scaling](docs/feature_scaling_decisions.md), [weighting](docs/feature_integration_decisions.md), [FastText](docs/fasttext_decisions.md) |
 | L5 — K=3 representation ablation | **Complete; frozen before external evaluation** | [L5 evidence and decisions](docs/l5_k3_ablation_decisions.md) |
-| L6 — Standalone K=3 external evaluation | **Complete: E0–E7 executed** | [L6 notebooks and findings](notebooks/data exploration/README.md) · [PR #36](https://github.com/frankie-chew-nus/sentiment-clustering-ml/pull/36) |
+| L6 — Standalone K=3 external evaluation | **Complete: E0–E7 executed** | [L6 notebooks and findings](notebooks/data%20exploration/README.md) · [PR #36](https://github.com/frankie-chew-nus/sentiment-clustering-ml/pull/36) |
+| L6 — Model ablation and prompt exploration | **E12–E23 documented; exploratory** | [Model ablation](notebooks/model%20ablation/README.md) |
+| L6 — Qwen preprocessing sensitivity | **E24–E26 documented; exploratory** | [General-model investigation](notebooks/general-model-investigation/README.md) |
 
 **Latest user-verified regression result:** **179/179 tests passed** (L4-M4; Google Colab, 9.69 s). Tests establish implementation consistency, **not** superior sentiment clustering. L5 label-blind K=3 clustering has been performed (seven representations × five seeds); L6 has evaluated eight standalone K=3 representations (E0–E7) against original sentiment annotations after label-blind clustering. The 179-test result refers to the earlier L4 regression suite, not new L5 code tests.
 
@@ -194,7 +196,10 @@ The separately provided `L4_Vectorization_Normalization_Demo.ipynb` is **not ass
 | `docs/feature_integration_decisions.md` | L4-M3 weighting coefficients and artifact verification |
 | `docs/fasttext_decisions.md` | L4-M4 FastText feasibility and export verification |
 | `docs/l5_k3_ablation_decisions.md` | Frozen L5 K=3 ablation, stability, weighting comparison, interpretation and next-stage recommendations |
-| `notebooks/` | Demonstrations and user-approved notebook artifacts; consult folder for current versions |
+| `notebooks/` | Reusable pipeline demonstrations and categorized experiment folders; E0–E7 standalone notebooks live under `notebooks/data exploration/` (not at notebook root) |
+| `notebooks/data exploration/` | Canonical E0–E7 standalone notebooks and experiment README |
+| `notebooks/model ablation/` | E12–E23 model/prompt comparison and README |
+| `notebooks/general-model-investigation/` | E24–E26 Qwen preprocessing ablation and README |
 
 ## Install and test
 
@@ -326,8 +331,25 @@ Eight standalone Colab experiments independently regenerated representations fro
 
 These results describe clustering on the same annotated corpus, **not** predictive performance on unseen tweets. E7 is explicitly label-informed exploratory development, so these annotations cannot provide untouched independent confirmation of E7. Silhouette measures geometric separation within each representation, not sentiment accuracy.
 
-For full metric tables, configurations, interpretation and limitations, see the [L6 experiment README](notebooks/data exploration/README.md) and [E0–E7 notebooks](notebooks/data exploration/). L6 assembles existing modular functions into experiments; it does not add reusable pipeline functions.
+For full metric tables, configurations, interpretation and limitations, see the [L6 experiment README](notebooks/data%20exploration/README.md) and [E0–E7 notebooks](notebooks/data%20exploration/). L6 assembles existing modular functions into experiments; it does not add reusable pipeline functions.
 
 ## Next steps
 
 The L5 label-blind K=3 decisions remain frozen and distinct from the completed L6 external evaluation. Any future K=2–8 sensitivity, new clustering algorithms or label-informed tuning should be approved and documented as separate exploratory workstreams. A new independent labelled evaluation source would be needed for confirmatory claims after model selection. L4-M5 was proposed as a handover task but has not been separately implemented or validated. PR #29 was a closed, **unmerged** revert proposal and must not be treated as undoing M3.
+
+
+## Later L6 investigations — model and preprocessing sensitivity
+
+Following the E0–E7 K-means representation study, the project explored **different clustering algorithms and representations** in [model ablation](notebooks/model%20ablation/README.md). Among the tested unsupervised configurations, E16 (MiniLM + K-means) reported external ARI **0.1325**, while E14 (TF-IDF + 50-dimensional SVD + GMM) reported Macro F1 **0.5087**. These comparisons also change dimensionality and preprocessing in places; they are not perfectly isolated algorithm ablations.
+
+The separate **Qwen2.5-3B-Instruct zero-shot classification** benchmark (E19) and prompt refinements (E20–E23) address a different, explicitly instructed task rather than discovering unnamed clusters. The leading exploratory E23 prompt reported direct accuracy **82.30%** and Macro F1 **0.7603**. These prompts were refined after examining labels and errors on the same corpus, so their reported results are exploratory, **not independent confirmatory evidence**. Do not compare directly mapped classification accuracy to cluster-to-class mapped accuracy as though the tasks were identical.
+
+The [general-model investigation](notebooks/general-model-investigation/README.md) then held Qwen and the E23 prompt fixed while varying input preprocessing: E23 RAW Macro F1 **0.7603**, E24 P0 **0.7598**, E25 P1 **0.7582**, and E26 P2 **0.6955**. The P2 decline is specific to this setup; the individual P2 operations were not separately ablated. An untouched evaluation set or new labelled tweets would be required for confirmatory model-selection claims.
+
+### Canonical E0–E7 notebook location
+
+All eight E0–E7 standalone notebooks are organized under [`notebooks/data exploration/`](notebooks/data%20exploration/). The formerly duplicated root-level notebook copies were consolidated into this folder, preserving the root-level notebook blobs (including their saved outputs) in the organized location. The prior clean, output-cleared versions remain retrievable from Git history. **Notebook execution outputs are evidence, not a substitute for independent reproduction or source-hash checks.**
+
+### Evidence status and safeguards
+
+The L1–L4 master Drive directory remains **read-only**. L5 was frozen before external evaluation; L6 and later label-informed experiments must not retroactively change its conclusions. Test count **179/179** is the historical L4-M4 regression result, not a claim of current E0–E26 test coverage. Original labels, tweet-level prediction checkpoints, credentials, and sensitive experiment outputs should not be committed to this public repository. Detailed notebook READMEs summarize externally executed experiments; consult saved manifests, assignments, prediction outputs, and metrics for reproducibility.

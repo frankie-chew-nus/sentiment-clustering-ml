@@ -171,3 +171,8 @@ The reusable preprocessing and feature-building modules live in the repository's
 - [E19 Qwen zero-shot notebook](L6_E19_Qwen_ZeroShot_E0_Style_Install.ipynb) — the latest committed model-ablation notebook, with execution outputs cleared.
 
 **Evidence inventory:** E0, E6, E12, E13 and E14–E18 were executed and reviewed in the project's Colab/Drive workflow. This README summarizes their recorded scores; it does **not** imply all those notebooks or their raw outputs are currently committed to this folder. Add them separately if the repository is intended to contain the complete model-ablation notebook collection.
+
+
+## E0/E6 notebook organization
+
+The canonical E0–E7 standalone notebooks have been consolidated into [`../data exploration/`](../data%20exploration/README.md) from the previous `notebooks/` root-level duplicates. Any E0/E6 copies retained in this model-ablation folder are experiment-specific comparison snapshots, not the canonical E0–E7 inventory. Consult Git history for earlier output-cleared versions.

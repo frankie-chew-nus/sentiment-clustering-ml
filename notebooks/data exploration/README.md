@@ -2,7 +2,7 @@
 
 **Purpose:** Document the independent L6 experiment notebooks, their design choices, measured results, and interpretation. This README belongs **beside the notebooks** in `notebooks/data exploration/`, not in the repository's root README. It documents experiments rather than reusable library functions.
 
-**Status:** E0–E7 executed; E4 was rerun after correcting E3-prefixed output filenames. The figures below are taken from the supplied executed notebooks and should be checked against the saved evidence artifacts before formal publication.
+**Status:** E0–E7 executed; E4 was rerun after correcting E3-prefixed output filenames. The figures below are taken from the supplied executed notebooks and should be checked against the saved evidence artifacts before formal publication. **Repository organization update:** The eight larger standalone notebooks previously duplicated at `notebooks/` were moved into this folder, replacing the smaller output-cleared copies. The replaced clean copies remain available in Git history.
 
 ## 1. What we were trying to learn
 
@@ -119,6 +119,6 @@ notebooks/data exploration/
   L6_E7_Exploratory_Hybrid_Standalone.ipynb
 ```
 
-The consolidated E0–E7 analysis notebook was prepared separately but **was not included in PR #36**. The committed E0–E7 notebooks have their execution outputs cleared; the user-run notebooks and Google Drive experiment output directories retain the executed results, JSON metrics, assignments, figures and provenance evidence. Preserve those external artifacts as the numerical evidence: this README is an interpretation, not a replacement for saved experiment outputs.
+The consolidated E0–E7 analysis notebook was prepared separately but **was not included in PR #36**. The current E0–E7 notebook files in this folder preserve the larger root-level notebook versions, including any saved notebook outputs. These outputs have not been independently re-executed or reconciled with external Drive metrics by this documentation-only reorganization; the original user-run notebooks and Google Drive experiment output directories remain the authoritative evidence to verify against. Preserve those external artifacts as the numerical evidence: this README is an interpretation, not a replacement for saved experiment outputs.
 
 **Repository scope:** L6 uses the existing modular Python code as a library, but does not introduce new reusable pipeline modules. The root README links to this experiment record and gives only a brief project-level findings summary.
