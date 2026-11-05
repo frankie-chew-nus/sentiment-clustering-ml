@@ -16,6 +16,7 @@ Modular Python pipeline for **unsupervised clustering of airline tweets by senti
 | L6 — Standalone K=3 external evaluation | **Complete: E0–E7 executed** | [L6 notebooks and findings](notebooks/data%20exploration/README.md) · [PR #36](https://github.com/frankie-chew-nus/sentiment-clustering-ml/pull/36) |
 | L6 — Model ablation and prompt exploration | **E12–E23 documented; exploratory** | [Model ablation](notebooks/model%20ablation/README.md) |
 | L6 — Qwen preprocessing sensitivity | **E24–E26 documented; exploratory** | [General-model investigation](notebooks/general-model-investigation/README.md) |
+| Additional model exploration notebooks | Three exploratory notebooks documented; separate from frozen L5 and canonical E0–E26 tracks | [Models exploration](notebooks/models-exploration/README.md) |
 
 **Latest user-verified regression result:** **179/179 tests passed** (L4-M4; Google Colab, 9.69 s). Tests establish implementation consistency, **not** superior sentiment clustering. L5 label-blind K=3 clustering has been performed (seven representations × five seeds); L6 has evaluated eight standalone K=3 representations (E0–E7) against original sentiment annotations after label-blind clustering. The 179-test result refers to the earlier L4 regression suite, not new L5 code tests.
 
@@ -200,6 +201,8 @@ The separately provided `L4_Vectorization_Normalization_Demo.ipynb` is **not ass
 | `notebooks/data exploration/` | Canonical E0–E7 standalone notebooks and experiment README |
 | `notebooks/model ablation/` | E12–E23 model/prompt comparison and README |
 | `notebooks/general-model-investigation/` | E24–E26 Qwen preprocessing ablation and README |
+| `notebooks/models-exploration/` | Three exploratory notebooks covering a seed-42 representation/algorithm comparison and broader staged investigations; see its README |
+| `notebooks/other exploration/` | Reserved/other exploratory material; its README is currently empty |
 
 ## Install and test
 
@@ -352,4 +355,4 @@ All eight E0–E7 standalone notebooks are organized under [`notebooks/data expl
 
 ### Evidence status and safeguards
 
-The L1–L4 master Drive directory remains **read-only**. L5 was frozen before external evaluation; L6 and later label-informed experiments must not retroactively change its conclusions. Test count **179/179** is the historical L4-M4 regression result, not a claim of current E0–E26 test coverage. Original labels, tweet-level prediction checkpoints, credentials, and sensitive experiment outputs should not be committed to this public repository. Detailed notebook READMEs summarize externally executed experiments; consult saved manifests, assignments, prediction outputs, and metrics for reproducibility.
+The L1–L4 master Drive directory remains **read-only**. L5 was frozen before external evaluation; L6 and later label-informed experiments must not retroactively change its conclusions. Test count **179/179** is the historical L4-M4 regression result, not a claim of current E0–E26 test coverage. Original labels, tweet-level prediction checkpoints, credentials, and sensitive experiment outputs should not be committed to this public repository. Detailed notebook READMEs summarize externally executed experiments; consult saved manifests, assignments, prediction outputs, and metrics for reproducibility. The `notebooks/models-exploration/` notebooks form an additional exploratory track and are not part of the frozen L5 K=3 comparison or the canonical L6 E0–E26 experiment numbering. Keep their reported seed-42 metrics separate from the E0–E7 and E12–E26 result tables.
