@@ -14,6 +14,14 @@ The notebooks use the supplied sentiment labels as evaluation references, not as
 
 The two long notebooks have 216 and 217 cells respectively and share the same broad stages through Stage 20. They should be treated as related working versions, not as independent runs whose results can be averaged or counted as replications.
 
+### Version and evidence policy
+
+- **Keep both long-form notebooks:** they contain overlapping stages but differ in setup, cell structure and some early auditing material. Neither should be deleted or renamed solely on the basis of this README review.
+- **Do not designate a canonical long-form notebook yet:** a definitive successor/predecessor relationship and cell-by-cell equivalence have not been established. Choose a notebook for execution only after checking its required inputs, dependencies and stage-specific changes.
+- **Avoid double-counting results:** if the same experiment, artifact or saved metric appears in both long notebooks, cite its underlying run once rather than treating the copies as independent confirmations.
+- **Use unambiguous references:** identify every result by notebook filename, stage, row count, representation, clustering algorithm, seed and saved-artifact provenance. Local E0/E7 identifiers alone are not unique across this repository.
+- **Separate historical from approved evidence:** saved outputs in these notebooks are exploratory records; the frozen L5 and canonical L6 evidence retain their separately documented status.
+
 ## 1. Focused experiment: three representations × three algorithms
 
 [Models exploration.ipynb](./Models%20exploration.ipynb) uses 14,639 tweets and a fixed random seed of 42. It compares:
