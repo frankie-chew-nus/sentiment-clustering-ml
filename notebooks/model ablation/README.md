@@ -169,6 +169,7 @@ The reusable preprocessing and feature-building modules live in the repository's
 
 - [Earlier E0–E7 exploration](../data%20exploration/README.md) — representation and weighting ablations.
 - [E19 Qwen zero-shot notebook](L6_E19_Qwen_ZeroShot_E0_Style_Install.ipynb) — the latest committed model-ablation notebook, with execution outputs cleared.
+- [Additional model exploration notebooks](../models-exploration/README.md) — a separate exploratory track, including a seed-42 3 × 3 comparison and broader staged notebooks; its results are not pooled into the E0–E26 experiment tables.
 
 **Evidence inventory:** E0, E6, E12, E13 and E14–E18 were executed and reviewed in the project's Colab/Drive workflow. This README summarizes their recorded scores; it does **not** imply all those notebooks or their raw outputs are currently committed to this folder. Add them separately if the repository is intended to contain the complete model-ablation notebook collection.
 
