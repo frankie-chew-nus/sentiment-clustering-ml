@@ -202,7 +202,7 @@ The separately provided `L4_Vectorization_Normalization_Demo.ipynb` is **not ass
 | `notebooks/model ablation/` | E12–E23 model/prompt comparison and README |
 | `notebooks/general-model-investigation/` | E24–E26 Qwen preprocessing ablation and README |
 | `notebooks/models-exploration/` | Three exploratory notebooks covering a seed-42 representation/algorithm comparison and broader staged investigations; see its README |
-| `notebooks/other exploration/` | Reserved/other exploratory material; its README is currently empty |
+| `notebooks/other exploration/` | Unclassified exploratory notebook archive (`Vectorization_models` and `parallel1`/`parallel2`); notebook scope is not yet reviewed |
 
 ## Install and test
 
