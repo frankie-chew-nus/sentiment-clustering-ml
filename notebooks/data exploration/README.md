@@ -122,3 +122,8 @@ notebooks/data exploration/
 The consolidated E0–E7 analysis notebook was prepared separately but **was not included in PR #36**. The current E0–E7 notebook files in this folder preserve the larger root-level notebook versions, including any saved notebook outputs. These outputs have not been independently re-executed or reconciled with external Drive metrics by this documentation-only reorganization; the original user-run notebooks and Google Drive experiment output directories remain the authoritative evidence to verify against. Preserve those external artifacts as the numerical evidence: this README is an interpretation, not a replacement for saved experiment outputs.
 
 **Repository scope:** L6 uses the existing modular Python code as a library, but does not introduce new reusable pipeline modules. The root README links to this experiment record and gives only a brief project-level findings summary.
+
+
+## Related exploratory notebook track
+
+The repository also contains a separate set of exploratory model notebooks in [`../models-exploration/`](../models-exploration/README.md). That folder documents a seed-42 3 × 3 representation/algorithm comparison and two broader staged research notebooks. It is **not** another copy of the canonical E0–E7 standalone K-means sequence, and its reported metrics should not be merged into the E0–E7 table above. Refer to its own README for its specific inputs, experiment design and notebook-reported results.
