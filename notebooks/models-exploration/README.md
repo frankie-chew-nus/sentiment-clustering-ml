@@ -70,4 +70,4 @@ Transformer embedding and model stages may download pretrained weights and requi
 
 ## Reproducibility note
 
-These notebooks are exploratory research artifacts rather than one canonical end-to-end pipeline. Prefer the project's separately documented and frozen experiment specifications when reproducing approved results. Preserve the original notebooks and source data; make changes in versioned working copies and document the exact configuration and outputs associated with each reported finding.
+These notebooks are an additional exploratory track, separate from the repository's frozen L5 K=3 representation ablation and numbered L6 E0–E26 experiments. They are exploratory research artifacts rather than one canonical end-to-end pipeline. Prefer the project's separately documented and frozen experiment specifications when reproducing approved results. Preserve the original notebooks and source data; make changes in versioned working copies and document the exact configuration and outputs associated with each reported finding.
