@@ -96,4 +96,4 @@ P0/P1/P2 were designed as modular cleaning options for statistical NLP and featu
 
 ## Repository navigation
 
-The canonical E0–E7 notebooks are maintained in [`../data exploration/`](../data%20exploration/README.md); the [model-ablation README](../model%20ablation/README.md) documents E12–E23. This folder contains the E24–E26 preprocessing comparison only. Saved results remain exploratory until independently confirmed on untouched labelled data.
+The canonical E0–E7 notebooks are maintained in [`../data exploration/`](../data%20exploration/README.md); the [model-ablation README](../model%20ablation/README.md) documents E12–E23; and [`../models-exploration/`](../models-exploration/README.md) contains a separate, non-E-series exploratory notebook track. This folder contains the E24–E26 preprocessing comparison only. Saved results remain exploratory until independently confirmed on untouched labelled data.
